@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Fountainhead</title>
+    <description>Blog</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Thu, 20 Jun 2019 01:23:36 +0800</pubDate>
+    <lastBuildDate>Thu, 20 Jun 2019 01:23:36 +0800</lastBuildDate>
+    <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Other]First Blog</title>
+        <description>&lt;p&gt;祝愿我自己的质量博文越来越多！
+&lt;img src=&quot;/images/Other/MyImages.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 20 Jun 2019 00:38:32 +0800</pubDate>
+        <link>http://localhost:4000/other/2019/06/20/First-Blog.html</link>
+        <guid isPermaLink="true">http://localhost:4000/other/2019/06/20/First-Blog.html</guid>
+        
+        
+        <category>other</category>
+        
+      </item>
+    
+  </channel>
+</rss>
