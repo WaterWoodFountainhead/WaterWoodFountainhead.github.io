@@ -5,9 +5,273 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Thu, 27 Jun 2019 00:48:40 +0800</pubDate>
-    <lastBuildDate>Thu, 27 Jun 2019 00:48:40 +0800</lastBuildDate>
+    <pubDate>Thu, 27 Jun 2019 19:19:51 +0800</pubDate>
+    <lastBuildDate>Thu, 27 Jun 2019 19:19:51 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Unp]Chapter 3</title>
+        <description>&lt;h1 id=&quot;ipv4套接字地址结构&quot;&gt;IPv4套接字地址结构&lt;/h1&gt;
+
+&lt;p&gt;它以sockaddr_in命名，定义在&amp;lt;netinet/in.h&amp;gt;头文件中。如下是它的POSIX定义：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;关于套接字地址结构的一般性说明：&lt;/p&gt;
+
+&lt;p&gt;1）长度字段sin_len是为增加对OSI协议的支持而随4.3BSD-Reno添加的。不过，POSIX规范也不要求有这个成员。该成员的数据类型uint8_t是典型的，符合POSIX的系统都提供这种形式的数据类型。即使有长度字段，我们也无须设置和检查它，除非涉及路由套接字。它是由处理来自不同协议族的套接字地址结构的例程（例如路由表处理代码）在内核中使用的。&lt;/p&gt;
+
+&lt;p&gt;2）POSIX规范只需要这个结构中的3个字段：sin_family、sin_addr和sin_port。对于符合POSIX的实现来说，定义额外的结构字段是可以接受的，这对于网际套接字地址结构来说也是正常的。几乎所有的实现都增加了sin_zero字段，所以所有的套接字地址结构大小都至少是16字节（因为sin_zero是一个带有8个元素长度的char类型的数组）。&lt;/p&gt;
+
+&lt;p&gt;sin_addr字段：in_addr_t数据类型必须是一个至少32位的无符号整数类型。&lt;/p&gt;
+
+&lt;p&gt;sin_port字段：in_port_t必须是一个至少16位的无符号整数类型。&lt;/p&gt;
+
+&lt;p&gt;sin_family字段：sa_family_t数据类型可以是任何无符号整数类型。在支持长度字段的实现中，sa_family_t数据类型通常是一个8位的无符号整数，而在不支持长度字段的实现中，它则是一个16位的无符号整数。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;3，IPv4地址和TCP或UDP端口号在套接字地址结构中总是以网络字节序来存储。&lt;/p&gt;
+
+&lt;p&gt;4，32位IPv4地址存在两种不同的访问方法。第一种：&lt;strong&gt;.sin_addr&lt;/strong&gt; 按 &lt;strong&gt;in_addr&lt;/strong&gt;结构引用其中的32位IPv4地址。第二种：&lt;strong&gt;.sin_addr.s_addr&lt;/strong&gt; 将按 &lt;strong&gt;in_addr_t&lt;/strong&gt;（通常是一个无符号的32位整数）引用同一个32位IPv4地址。&lt;/p&gt;
+
+&lt;p&gt;5，sin_zero字段未曾使用，不过在填写这种套接字地址结构时，我们要把该字段置为0。尤其是，当捆绑一个非通配的IPv4地址时，该字段必须为0。&lt;/p&gt;
+
+&lt;p&gt;6，套接字地址结构仅在给定主机上使用：虽然结构中的某些字段（例如IP地址和端口号）用在不同主机之间的通信中，但是结构本身并不在主机之间传递。因为不同的主机中的地址结构有可能会不同。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;通用套接字地址结构&quot;&gt;通用套接字地址结构&lt;/h1&gt;
+
+&lt;p&gt;在任何套接字函数处理来自所支持的任何协议族的套接字地址结构的指针的时候，会引发一个问题（如何声明函数参数来容纳不同的指针类型？）。&lt;/p&gt;
+
+&lt;p&gt;当然，ANSI C用 void * 解决了通用指针类型的问题。不过在这之前（1982年）采取的办法是在&amp;lt;sys/socket.h&amp;gt;头文件中定义一个通用的套接字地址结构：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;由于套接字函数是在ANSI C之前定义的，因此套接字函数被定义为——以指向某个通用套接字地址结构的一个指针作为其参数之一。这正如bind函数的ANSI C函数原型所示：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;因此，这就要求对套接字地址结构的指针参数进行类型强制转换，变成指向某个通用套接字地址结构的指针，例如：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;从应用层和内核角度看待此情况的强制转换的意义：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;从应用程序开发人员的观点看，这些通用套接字地址结构的唯一用途就是对指向特定于协议的套接字地址结构的指针执行类型强制转换。&lt;/p&gt;
+
+&lt;p&gt;从内核的角度看，使用指向通用套接字地址结构的指针另有原因：内核必须取调用者的指针，把它类型强制转换为 **struct sockaddr * ** 类型，然后检查其中sa_family字段的值来确定这个结构的真实类型。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipv6-套接字地址结构&quot;&gt;IPv6 套接字地址结构&lt;/h1&gt;
+
+&lt;p&gt;IPv6套接字地址结构在&amp;lt;netinet/in.h&amp;gt;头文件中定义，如下图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;1，如果系统支持套接字地址结构中的长度字段，那么SIN6_LEN常值必须定义。&lt;/p&gt;
+
+&lt;p&gt;2，IPv6的地址族是AF_INET6，而IPv4的地址族是AF_INET。&lt;/p&gt;
+
+&lt;p&gt;3，结构中字段的先后顺序做过编排。如果 sockaddr_in6 套接字地址结构本身是64位对齐的，那么128位的 sin6_addr 字段也是64位对齐的。在一些64位处理机上，如果64位数据存储在某个64位边界位置，那么对它的访问将得到优化处理。&lt;/p&gt;
+
+&lt;p&gt;4，sin6_flowinfo 字段分成两个字段：（1）低序20位是流标（flow label）。（2）高序12位保留。&lt;/p&gt;
+
+&lt;p&gt;5，对于具备范围的地址（scoped address），sin6_scope_id字段标识其范围（scope），最常见的是链路局部地址（link-local address）的接口索引（interface index）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;新的通用套接字地址结构&quot;&gt;新的通用套接字地址结构&lt;/h1&gt;
+
+&lt;p&gt;作为IPv6套接字API的一部分而定义的新的通用套接字地址结构克服了现有struct sockaddr的一些缺点。&lt;/p&gt;
+
+&lt;p&gt;新的struct sockaddr_storage足以容纳系统所支持的任何套接字地址结构。sockaddr_storage结构在&amp;lt;netinet/in.h&amp;gt;头文件中定义，如下图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.6.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;新的通用套接字（sockaddr_storage）与旧的（sockaddr）之间的区别：&lt;/p&gt;
+
+&lt;p&gt;1，如果系统支持的任何套接字地址结构有对齐需要，那么sockaddr_storage能够满足最苛刻的对齐要求。&lt;/p&gt;
+
+&lt;p&gt;2，sockaddr_storage足够大，能够容纳系统支持的任何套接字地址结构。
+注意，除了ss_family和ss_len外（如果有的话），sockaddr_storage结构中的其他字段对用户来说是透明的。sockaddr_storage结构必须类型强制转换成（或复制到）适合ss_family字段所给出指针类型的套接字地址结构中，才能访问其他字段。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;套接字地址结构的比较&quot;&gt;套接字地址结构的比较&lt;/h1&gt;
+
+&lt;p&gt;5种套接字地址结构进行比较：IPv4、IPv6、Unix域、数据链路和存储。（Unix域和数据链路以后会提到）&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.7.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;说明：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;前两种套接字地址结构是固定长度的。Unix域结构和数据链路结构是可变长度的，为了处理长度可变的结构，我们把一个指针（它指向套接字地址结构）作为参数传递给套接字函数时，也把该套接字地址结构的长度作为另一个参数传递给它。&lt;/p&gt;
+
+&lt;p&gt;我们在每种长度固定的结构下方给出了这种结构的字节数长度。&lt;/p&gt;
+
+&lt;p&gt;不过，Unix域（sockaddr_un）结构本身并非长度可变的，但是其中的信息（即结构中的路径名）却是长度可变的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;值结果参数&quot;&gt;值—结果参数&lt;/h1&gt;
+
+&lt;p&gt;当一个套接字地址结构的指针作为一个套接字函数的参数时，结构的长度也会作为一个参数来传递，不过其传递方式取决于该结构的传递方向：是从进程到内核，还是从内核到进程。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;从进程到内核：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;有3个函数——bind、connect和sendto。这些函数的一个参数是指向某个套接字地址结构的指针，另一个参数是该结构的整数大小，例如：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这样内核知道到底需要从进程复制多少数据进来，如图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;从内核到进程：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;有4个函数——accept、recvfrom、getsockname 和 getpeername。这四个函数的其中两个参数是指向套接字地址结构和指向该结构长度的指针，例如：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;label style=&quot;color:red&quot;&gt;将长度以指针传递给内核的原因是：&lt;/label&gt;&lt;/p&gt;
+
+&lt;p&gt;当函数被调用时，结构大小是一个值（value），它告诉内核该结构的大小，这样内核在写该结构时不至于越界；当函数返回时，结构大小又是一个结果（result），它告诉进程内核在该结构中究竟存储了多少信息。这种类型的参数称为值—结果（value-result）参数。&lt;/p&gt;
+
+&lt;p&gt;如图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;除这四个函数外，还有其他 值—结果参数相关的函数：&lt;/p&gt;
+
+&lt;p&gt;1，select函数中间的3个参数。&lt;/p&gt;
+
+&lt;p&gt;2，getsockopt函数的长度参数。&lt;/p&gt;
+
+&lt;p&gt;3，ifconf结构中的ifc_len字段。&lt;/p&gt;
+
+&lt;p&gt;4，sysctl函数两个长度参数中的第一个。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;字节排序函数&quot;&gt;字节排序函数&lt;/h1&gt;
+
+&lt;p&gt;由于历史的原因和POSIX规范的规定，套接字地址结构中的某些字段必须按照网络字节序进行维护。因此我们要关注如何在&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;主机字节序和网络字节序(nouns第14条)&lt;/a&gt;之间相互转换。这两种字节序之间的转换使用以下4个函数：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.4.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;h代表host，n代表network，s代表short，l代表long。（short和long这两个称谓是出自4.2BSD的Digital VAX实现的历史产物。）我们应该把s视为一个16位的值（例如TCP或UDP端口号），把l视为一个32位的值（例如IPv4地址）。&lt;/p&gt;
+
+&lt;p&gt;当使用这些函数时，我们并不关心主机字节序和网络字节序的真实值。在那些与网际协议所用字节序（大端）相同的系统中，这四个函数通常被定义为空宏。&lt;/p&gt;
+
+&lt;p&gt;于此同时，我们也应该了解下&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;因特网标准的两条重要约定(nouns第15条)&lt;/a&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;字节操纵函数&quot;&gt;字节操纵函数&lt;/h1&gt;
+
+&lt;p&gt;名字以b（表示字节）开头的第一组函数起源于4.2BSD，几乎所有现今支持套接字函数的系统仍然提供它们。名字以mem（表示内存）开头的第二组函数起源于ANSI C标准，支持ANSIC函数库的所有系统都提供它们。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;4.2BSD&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.5.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Bzero函数：它把目标字节串中指定数目的字节置为0。我们可以使用该函数来把一个套接字地址结构初始化为0。&lt;/p&gt;
+
+&lt;p&gt;Bcopy函数 ：它将指定数目的字节从源字节串移到目标字节串。&lt;/p&gt;
+
+&lt;p&gt;Bcmp函数：它比较两个任意的字节串，若相同则返回值为0，否则返回值为非0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;ANSI C函数&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.5.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Memset函数：它把目标字节串指定数目的字节置为值c。&lt;/p&gt;
+
+&lt;p&gt;Memcpy函数：它类似bcopy，不过两个指针参数的顺序是相反的。&lt;strong&gt;注意&lt;/strong&gt;：当源字节串与目标字节串重叠时，bcopy能够正确处理，但是memcpy的操作结果却不可知。这种情形下必须改用ANSI C的memmove函数。memcpy的赋值顺序（从左往右）：dest = src 。&lt;/p&gt;
+
+&lt;p&gt;Memcmp函数：它比较两个任意的字节串，若相同则返回0，否则返回一个非0值，是大于0还是小于0则取决于第一个不等的字节。注意：比较操作是在假设两个不等的字节均为无符号字符（unsigned char）的前提下完成的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;两组地址转换函数&quot;&gt;两组地址转换函数&lt;/h1&gt;
+
+&lt;p&gt;有两组函数可以在ASCII字符串（人类偏爱的格式）与网络字节序的二进制值（这是存放在套接字地址结构中的值）之间转换网际地址。&lt;/p&gt;
+
+&lt;p&gt;（1）inet_aton、inet_addr 和 inet_ntoa在点分十进制数串（例如“206.168.112.96”）与它长度为32位的网络字节序二进制值间转换IPv4地址。&lt;/p&gt;
+
+&lt;p&gt;（2）两个较新的函数inet_pton 和 inet_ntop对于IPv4地址和IPv6地址都适用。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;inet_aton、inet_addr 和 inet_ntoa 函数&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.6.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;inet_aton 函数：它将strptr所指C字符串转换成一个32位的网络字节序二进制值，并通过指针addrptr来存储。若成功则返回1，否则返回0。它有一个特性：如果addrptr指针为空，那么该函数仍然对输入的字符串执行有效性检查，但是不存储任何结果。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;inet_addr 函数已被废弃(nouns第16条)。&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;inet_ntoa 函数：它将一个32位的网络字节序二进制IPv4地址转换成相应的点分十进制数串。由该函数的返回值所指向的字符串驻留在静态内存中。这意味着该函数是不可重入的。最后，它的参数是以结构的值传递的，这是很罕见的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;inet_pton 和 inet_ntop 函数&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;函数名中p和n分别代表表达（presentation）和数值（numeric）。&lt;/p&gt;
+
+&lt;p&gt;地址的表达格式通常是ASCII字符串，数值格式则是存放到套接字地址结构中的二进制值。&lt;/p&gt;
+
+&lt;p&gt;这两个函数的family参数既可以是AF_INET，也可以是AF_INET6。如果以不被支持的地址族作为family参数，这两个函数就都返回一个错误，并将errno置为EAFNOSUPPORT。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;inet_pton 函数：它尝试转换由strptr指针所指的字符串，并通过addrptr指针存放二进制结果。若成功则返回值为1，否则如果对所指定的family而言输入的字符串不是有效的表达格式，那么返回值为0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;inet_ntop 函数：它进行相反的转换，从数值格式（addrptr）转换到表达格式（strptr）。len参数是目标存储单元的大小，以免该函数溢出其调用者的缓冲区。为有助于指定这个大小，在&amp;lt;netinet/in.h&amp;gt;头文件中有如下定义：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;关于inet_ntop的参数：&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;（1）如果len参数太小，不足以容纳表达格式结果（包括结尾的空字符），那么返回一个空指针，并置errno为ENOSPC。&lt;/p&gt;
+
+&lt;p&gt;（2）它的strptr参数不可以是一个空指针。调用者必须为目标存储单元分配内存并指定其大小。调用成功时，这个指针就是该函数的返回值。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;总结inet_aton、inet_addr 和 inet_ntoa 、inet_pton 和 inet_ntop 函数&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 27 Jun 2019 10:00:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/06/27/Unp-Chapter-3.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/06/27/Unp-Chapter-3.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
     
       <item>
         <title>[Unp]Chapter 2</title>
@@ -109,6 +373,37 @@
 &lt;p&gt;12，&lt;strong&gt;迷途&lt;/strong&gt;，通常是路由异常的结果。&lt;/p&gt;
 
 &lt;p&gt;例如：某个路由器崩溃或某两个路由器之间的某个链路断开时，路由协议需花数秒钟到数分钟的时间才能稳定并找出另一条通路。在这段时间内有可能发生路由循环（路由器A把分组发送给路由器B，而B再把它们发送回A），我们关心的分组可能就此陷入这样的循环。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;13，&lt;strong&gt;网际套接字地址结构&lt;/strong&gt;，它是IPv4套接字地址结构，它以sockaddr_in命名。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;14，&lt;strong&gt;小端（little-endian）&lt;/strong&gt;字节序，是将低序字节存储在起始地址的方法；&lt;strong&gt;大端（big-endian）&lt;/strong&gt;字节序，是将高序字节存储在起始地址的方法。如图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/NOUNS/NOUNS_14.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;主机字节序&lt;/strong&gt;，是某个给定系统所用的字节序的名称。&lt;/p&gt;
+
+&lt;p&gt;由于网络协议必须制定一个网络字节序（network byte order），其中网际协议使用大端字节序来传送这些多字节整数。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;15，&lt;strong&gt;因特网标准的两个重要约定&lt;/strong&gt;：1）大多数因特网标准使用八位组（octet）这个术语而不是使用字节来表示8位的量。2）另一约定是位序。如图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/NOUNS/NOUNS_15.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;它表示按照在线缆上出现的顺序排列4个字节（32个位），最左边的位是最早出现的最高有效位。注意位序的编号从0开始，分配给最高有效位的编号位0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;16，&lt;strong&gt;inet_addr函数被废弃的原因&lt;/strong&gt;：它进行相同的转换，返回值为32位的网络字节序二进制值。但是，该函数存在两个问题：&lt;/p&gt;
+
+&lt;p&gt;1）当出错时该函数返回 INADDR_NONE常值（通常是一个32位均为1的值）。这意味着点分十进制数串255.255.255.255（这是IPv4的有限广播地址）不能由该函数处理，因为它的二进制值被用来当作该函数的失败返回值。&lt;/p&gt;
+
+&lt;p&gt;2）一些手册页面声明该函数出错时返回-1而不是INADDR_NONE。这样在对该函数的返回值（一个无符号的值）和一个负常值（-1）进行比较时可能会发生问题，具体取决于C编译器。&lt;/p&gt;
+
 </description>
         <pubDate>Wed, 26 Jun 2019 15:00:00 +0800</pubDate>
         <link>http://localhost:4000/unp/2019/06/26/Unp-Nouns.html</link>
