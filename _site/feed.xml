@@ -5,9 +5,299 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 28 Jun 2019 22:05:18 +0800</pubDate>
-    <lastBuildDate>Fri, 28 Jun 2019 22:05:18 +0800</lastBuildDate>
+    <pubDate>Tue, 16 Jul 2019 23:57:11 +0800</pubDate>
+    <lastBuildDate>Tue, 16 Jul 2019 23:57:11 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Apue]Chapter 10 - b</title>
+        <description>&lt;h1 id=&quot;函数-signal&quot;&gt;函数 signal&lt;/h1&gt;
+
+&lt;p&gt;UNIX 系统信号机制最简单的接口是 signal 函数。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;signo 返回值是一个函数地址，该函数的参数是整型。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+signal 函数参数：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;signo 参数是信号名(SIGXXXX)。signo 是一个整型数。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;func 是函数指针。func 的值是常量 SIG_IGN、常量SIG_DFL ，或着是 当接收到这个信号后，要调用的函数的地址。
+&lt;br /&gt;&lt;br /&gt;
+如果制定SIG_IGN，则向内核表示忽略此信号（SIGKILL 和 SIGSTOP 不能被忽略）。
+&lt;br /&gt;&lt;br /&gt;
+如果制定SIG_DFL，则表示，接收到这个信号后的动作是系统默认动作。
+&lt;br /&gt;&lt;br /&gt;
+当func 参数是函数的地址时，那么在信号发生时，调用该函数。我们称这种处理为 ‘捕捉该信号”；称这个函数为 “信号处理函数” 或 ”信号捕捉函数“。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;不可靠的信号&quot;&gt;不可靠的信号&lt;/h1&gt;
+
+&lt;p&gt;不可靠的信号是指，信号可能会丢失。一个信号发生了，但进程却可能一直不知道这一点。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;早期版本有一个问题：在进程每次接收到信号，然后进行处理时，将该信号动作重置为默认值。
+例如：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;这段代码的一个问题是：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;从信号发生后，一直到信号处理程序调用 signal 函数，这中间有一个时间窗口。在此段时间中，可能会发生另一次中断信号。第二个信号会造成执行默认动作，而对中断信号的默认动作是终止该进程。这种类型的程序段在大多数情况下会正常工作，使得我们认为它们是正确无误的，而实际上却并非如此。&lt;/p&gt;
+
+&lt;p&gt;我们可以对每种信号只捕捉一次，从而回避这一点。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;早期版本的另外一个问题：在进程不希望某种信号发生时，它不能关闭该信号。例如：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_4.png&quot; alt=&quot;它捕捉一个信号，然后设置一个表示该信号已发生的标志&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;过程：&lt;/p&gt;
+
+&lt;p&gt;进程调用 pause 函数使自己休眠，直到捕捉到一个信号后苏醒。当捕捉到信号时，信号处理程序将标志 sig_int_flag 设置为非 0 值。从信号处理程序返回后，内核自动将该进程唤醒，它检测到该标志为非 0，然后执行它所需做的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;这段代码的问题是：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;在检测sig_int_flag 之后、调用 pause 之前会产生一个时间窗口。如果在这段时间内发生信号，那么此进程在调用 pause 时，可能将永久休眠（假定此信号不会再次产生）。于是，这次发生的信号也就丢失了。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;中断的系统调用&quot;&gt;中断的系统调用&lt;/h1&gt;
+
+&lt;p&gt;早期Unix 系统的一个特性是：如果进程在执行一个低速系统调用，在阻塞期间捕捉到一个信号，则该低速系统调用就被中断，不再继续执行。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;低速系统调用是可能会让进程永远阻塞的一类系统调用，包括：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果某些类型文件的数据不存在，则读操作可能会使调用者永远阻塞。这里的某些类型文件指，读管道、终端设备和网络设备。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果这些数据不能被相同的类型文件立即接受，那么写操作可能会使调用者永远阻塞。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;在某种条件发生之前，打开某些类型文件，这可能会发生阻塞。比如，打开一个终端设备时，需要先等待与它连接的调制解调器的应答。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;pause 函数 和 wait 函数。按照pause 的定义，它使调用进程休眠，直到捕捉到一个信号苏醒。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;某些进程间通信函数。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;在这些低速系统调用中，有一个值得注意的例外：与磁盘 I/O 有关的系统调用。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;虽然读、写一个磁盘文件可能暂时阻塞调用者，但是除非发生硬件错误，I/O 操作总会很快返回，并且使调用者不再处于阻塞状态。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;为了帮助应用程序不必处理被中断的系统调用，4.2BSD 引进了（某些被中断系统调用的）自动重启动。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;引入自动重启动功能的一个理由是&lt;/strong&gt;：有时用户不知道使用的输入、输出设备是否是低速设备。如果在程序中捕捉信号，而且系统并不提供重启动功能， 则对每次读、写系统调用就要进行是否出错返回的测试；如果是被中断的，则再调用读、写系统调用&lt;/p&gt;
+
+&lt;p&gt;自动重启动的系统调用有：ioctl、read、readv、write、writev、wait 和 waitpid。前5个函数只有对低速设备进行操作时，才会被信号中断。而wait 和 waitpid 在捕捉到信号时，总是被中断。&lt;/p&gt;
+
+&lt;p&gt;因为这种自动重启动的处理方式也会带来问题，某些应用程序不希望这些函数被中断后重启动。因此，4.3BSD 允许进程基于每个信号禁用此功能。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;可重入函数&quot;&gt;可重入函数&lt;/h1&gt;
+
+&lt;p&gt;不可重入的例子：&lt;/p&gt;
+
+&lt;p&gt;进程捕捉到信号，对该信号进行处理时，进程正在执行的正常指令序列就会被临时中断（信号处理程序）。它会先执行该信号处理程序中的指令。如果进程正在malloc，从其堆中分配存储空间。而此时，进程捕捉到信号，从而先执行信号处理程序。因为进程调用了malloc，那么这种情况下会发生什么事情呢？&lt;/p&gt;
+
+&lt;p&gt;这可能会对进程造成破坏。因为malloc 通常为它分配的存储空间维护一个链表，而插入信号处理程序时，进程可能正在更改此链表。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+又例如，若进程正在执行getpwnam这种将其结果存放在静态存储单元中的函数，其间插入执行信号处理程序，它又调用这样的函数，则返回给正常调用者的信息 可能会被 返回给信号处理程序的信息 覆盖。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;可重入的函数如下表：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;大多数函数是不可重入的原因是：&lt;/p&gt;
+
+&lt;p&gt;（a）它们使用静态数据结构。&lt;/p&gt;
+
+&lt;p&gt;（b）它们调用 malloc 或 free。&lt;/p&gt;
+
+&lt;p&gt;（c）它们是标准 I/O 函数。标准 I/O 库的很多实现都以不可重入的方式使用全剧数据结构。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;注意：&lt;/p&gt;
+
+&lt;p&gt;（1）即使信号处理程序调用的是可重入函数，但是由于每个县城只有一个 errno 变量，因此信号处理程序会修改原先值。&lt;/p&gt;
+
+&lt;p&gt;（2）可重入函数列表中没有 longjmp 和 siglongjmp 的原因是：因为主例程以非可重入方式正在更新一个数据结构时，它可能产生信号。&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 16 Jul 2019 00:50:32 +0800</pubDate>
+        <link>http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-b.html</link>
+        <guid isPermaLink="true">http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-b.html</guid>
+        
+        
+        <category>apue</category>
+        
+      </item>
+    
+      <item>
+        <title>[Apue]Chapter 10 - a</title>
+        <description>&lt;h1 id=&quot;信号概念&quot;&gt;信号概念&lt;/h1&gt;
+
+&lt;p&gt;信号是软件中断。信号提供了一种处理异步事件的方法。&lt;/p&gt;
+
+&lt;p&gt;每个信号都有一个名字。这些名字都以3个字符SIG开头。&lt;/p&gt;
+
+&lt;p&gt;在头文件&lt;signal.h&gt;中，信号名都被定义为正整数常量（信号编号）。不存在编号为0的信号。不过，kill 函数对信号编号0有特殊应用。POSIX.1 将此种信号编号值称为空信号。&lt;/signal.h&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;有很多条件可以产生信号:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;当用户按下某些终端键时，使终端产生的信号。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;硬件异常产生信号：除数为0、无效的内存引用等。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;进程调用 kill(2) 函数，可以将任意信号发送给另一个进程(或 进程组)。&lt;br /&gt;&lt;br /&gt;&lt;strong&gt;不过，它是有限制的：&lt;/strong&gt;接受信号的进程和发送信号的进程，它们的所有者必须相同。或者，发送信号的进程的所有者是超级用户。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;用户可以用 kill(1) 命令将信号发送给其他进程。此命令只是 kill函数的接口。它常用于终止一个失控的后台进程。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;当检测到某种软件条件已经发生，并将其通知有关进程时，也会产生信号。这里指的不是硬件产生条件(比如，除以0)，而是软件条件。例如：SIGURG——在网络连接上传来带外的数据时产生，等等。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;进程不能测试一个变量来判断是否发生了一个信号，而是告诉内核进行处理。&lt;strong&gt;在某个信号出现时，可以告诉内核按下列3种方式之一进行处理：&lt;/strong&gt;（称为信号的处理，或与信号相关的动作）&lt;/p&gt;
+
+&lt;p&gt;（1）忽略此信号。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;有两种信号不能被忽略——SIGKILL 和 SIGSTOP。原因是，它们向内核和超级用户提供了让进程终止(或 停止) 的可靠方法。&lt;/p&gt;
+
+&lt;p&gt;如果忽略某些硬件异常所产生的信号，进程的运行行为是为定义的。比如：非法内存引用 或 除以0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;（2）捕捉信号。&lt;/p&gt;
+
+&lt;p&gt;为了捕捉信号，要通知内核在某种信号发生时，调用一个用户函数。在用户函数中，可以执行用户自己对这种事件的处理。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;（3）执行系统默认动作。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;对大多数信号而言，它们的系统默认动是终止该进程。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;下图列出所有信号的名字，说明了那些系统支持此信号，还有说明了这些信号的系统默认动作。&lt;/p&gt;
+
+&lt;p&gt;列表中的点号表示这个信号定义为基本 POSIX.1规范部分。“XSI” 表示该信号定义在XSI扩展部分。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;上图中，一部分信号的默认动作是“终止+core”，这会产生一个core文件。那么，如何避免产生core文件呢？&lt;/p&gt;
+
+&lt;p&gt;（a）进程是设置用户ID的，而且当前用户并非程序文件的所有者。&lt;/p&gt;
+
+&lt;p&gt;（b）进程是设置组ID的，并且当前用户并非该程序文件的所有者。&lt;/p&gt;
+
+&lt;p&gt;（c）用户没有写当前工作目录的权限。&lt;/p&gt;
+
+&lt;p&gt;（d）文件已存在，而且用户对该文件设有写权限。&lt;/p&gt;
+
+&lt;p&gt;（e）文件太大。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;上图中，SIGBUS——硬件故障   是对应实现定义的硬件故障。APUE p272 - 276页（实际页数为p252 - 256页）将进一步详细说明一些信号。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://waterwoodfountainhead.github.io/apue/2019/07/16/2019-07-16-Apue-Chapter-10-2.html&quot;&gt;进入下一篇：《Chapter 10 - b》&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Tue, 16 Jul 2019 00:38:32 +0800</pubDate>
+        <link>http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-a.html</link>
+        <guid isPermaLink="true">http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-a.html</guid>
+        
+        
+        <category>apue</category>
+        
+      </item>
+    
+      <item>
+        <title>[Unp]Chapter 5</title>
+        <description>&lt;p&gt;#&lt;/p&gt;
+
+&lt;p&gt;讲TIME_WAIT前，我们需要了解下&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;迷途(Nouns第12条)&lt;/a&gt;和TCP连接终止的过程，如图：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_2/UNP2.6.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;TCP的终结需要4个分节：&lt;/p&gt;
+
+&lt;p&gt;（1）客户端首先调用close，我们称该端执行主动关闭（active close）。该端的TCP于是发送一个FIN分节，表示数据发送完毕。&lt;/p&gt;
+
+&lt;p&gt;（2）接收到这个FIN的对端执行被动关闭（passive close）。这个FIN由TCP确认。服务端接收FIN意味着服务端的应用进程在相应连接上再无额外数据可接收。&lt;/p&gt;
+
+&lt;p&gt;（3）一段时间后，接收到这个文件结束符的应用进程将调用close关闭它的套接字。这导致它的TCP也发送一个FIN。&lt;/p&gt;
+
+&lt;p&gt;（4）接收这个最终FIN的客户端的TCP（即执行主动关闭的那一端）确认这个FIN。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;time_wait状态&quot;&gt;TIME_WAIT状态&lt;/h1&gt;
+
+&lt;p&gt;先介绍下TIME_WAIT状态：这个状态的持续时间是最长分节生命期（maximum segment lifetime，MSL）的两倍，有时候称之为2MSL。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;那么，TIME_WAIT状态有什么作用呢？&lt;/p&gt;
+
+&lt;p&gt;(1) 可靠地实现TCP全双工连接的终止；&lt;/p&gt;
+
+&lt;p&gt;假设最终的ACK丢失了来解释。服务器将重新发送它的最终那个FIN，因此客户必须维护状态信息，以允许它重新发送最终那个ACK。要是客户不维护状态信息，它将响应以一个RST（另外一种类型的TCP分节），该分节将被服务器解释成一个错误。如果TCP打算执行所有必要的工作以彻底终止某个连接上两个方向的数据流（即全双工关闭），那么它必须正确处理连接终止序列4个分节中任何一个分节丢失的情况。&lt;/p&gt;
+
+&lt;p&gt;这也说明了执行主动关闭的那一端(客户端)由于要重传最后一个ACK，所以是处于TIME_WAIT状态。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;(2) 允许老的重复分节在网络中消逝。&lt;/p&gt;
+
+&lt;p&gt;有时候一个连接可能会在关闭后，又在相同的ip地址和端口之间建立一个连接。因此TCP必须防止这个连接的老的重复分组在该连接已终止后再现，以免被误解成属于同一连接的某个新的化身。&lt;/p&gt;
+
+&lt;p&gt;为此，TCP将不给处于TIME_WAIT状态的连接发起新的化身。既然TIME_WAIT状态的持续时间是MSL的2倍，这就足以让某个方向上的分组最多存活MSL秒即被丢弃，另一个方向上的应答最多存活MSL秒也被丢弃。通过实施这个规则，我们就能保证每成功建立一个TCP连接时，来自该连接先前化身的老的重复分组都已在网络中消逝了。&lt;/p&gt;
+</description>
+        <pubDate>Tue, 02 Jul 2019 10:00:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
     
       <item>
         <title>[Unp]Chapter 4</title>

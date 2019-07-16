@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title> [Unp]Chapter 5 — TCP 客户/服务器程序 &raquo;  Fountainhead</title>
+<meta name="description" content="Blog">
+<meta name="keywords" content="">
+<link rel="canonical" href="http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html">
+        
+
+
+
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="[Unp]Chapter 5" />
+<meta name="twitter:description" content="Blog" />
+<meta name="twitter:image" content="http://localhost:4000" />
+
+<!-- Google plus -->
+<meta name="author" content="">
+<link rel="author" href="">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Unp]Chapter 5">
+<meta property="og:description" content="Blog">
+<meta property="og:url" content="http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html">
+<meta property="og:site_name" content="Fountainhead">
+
+        <link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/assets/vendor/normalize-css/normalize.css">
+<link rel="stylesheet" href="/css/main.css">
+
+  <link rel="stylesheet" href="/assets/vendor/highlight/styles/solarized_dark.css">
+
+<link rel="stylesheet" href="/assets/vendor/font-awesome/css/font-awesome.css">
+
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <header class="header">
+    <div class="navigation">
+        <a href="/" class="logo">Fountainhead</a>
+
+        <ul class="menu">
+            <li class="menu__entry"><a href="/about">About</a></li>
+            <li class="menu__entry"><a href="/">Blog</a></li>
+        </ul>
+    </div>
+
+    <ul class="social-links">
+        
+            <a href="https://github.com/WaterWoodFountainhead" class="social-links__entry" target="_blank">
+                <i class="fa fa-github"></i>
+            </a>
+        
+
+        
+    </ul>
+</header>
+
+            <h1 class="page-title post-title">
+    <div class="page-title__text post-title__text">[Unp]Chapter 5</div>
+    <div class="page-title__subtitle post-title__subtitle">TCP 客户/服务器程序</div>
+</h1>
+
+<div class="content">
+    <p>#</p>
+
+<p>讲TIME_WAIT前，我们需要了解下<a href="https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html">迷途(Nouns第12条)</a>和TCP连接终止的过程，如图：</p>
+
+<p><img src="/images/Unp/UNP_2/UNP2.6.1.png" alt="" /></p>
+
+<p>TCP的终结需要4个分节：</p>
+
+<p>（1）客户端首先调用close，我们称该端执行主动关闭（active close）。该端的TCP于是发送一个FIN分节，表示数据发送完毕。</p>
+
+<p>（2）接收到这个FIN的对端执行被动关闭（passive close）。这个FIN由TCP确认。服务端接收FIN意味着服务端的应用进程在相应连接上再无额外数据可接收。</p>
+
+<p>（3）一段时间后，接收到这个文件结束符的应用进程将调用close关闭它的套接字。这导致它的TCP也发送一个FIN。</p>
+
+<p>（4）接收这个最终FIN的客户端的TCP（即执行主动关闭的那一端）确认这个FIN。</p>
+
+<p><br /><br /></p>
+
+<h1 id="time_wait状态">TIME_WAIT状态</h1>
+
+<p>先介绍下TIME_WAIT状态：这个状态的持续时间是最长分节生命期（maximum segment lifetime，MSL）的两倍，有时候称之为2MSL。</p>
+
+<p><br /></p>
+
+<p>那么，TIME_WAIT状态有什么作用呢？</p>
+
+<p>(1) 可靠地实现TCP全双工连接的终止；</p>
+
+<p>假设最终的ACK丢失了来解释。服务器将重新发送它的最终那个FIN，因此客户必须维护状态信息，以允许它重新发送最终那个ACK。要是客户不维护状态信息，它将响应以一个RST（另外一种类型的TCP分节），该分节将被服务器解释成一个错误。如果TCP打算执行所有必要的工作以彻底终止某个连接上两个方向的数据流（即全双工关闭），那么它必须正确处理连接终止序列4个分节中任何一个分节丢失的情况。</p>
+
+<p>这也说明了执行主动关闭的那一端(客户端)由于要重传最后一个ACK，所以是处于TIME_WAIT状态。</p>
+
+<p><br /></p>
+
+<p>(2) 允许老的重复分节在网络中消逝。</p>
+
+<p>有时候一个连接可能会在关闭后，又在相同的ip地址和端口之间建立一个连接。因此TCP必须防止这个连接的老的重复分组在该连接已终止后再现，以免被误解成属于同一连接的某个新的化身。</p>
+
+<p>为此，TCP将不给处于TIME_WAIT状态的连接发起新的化身。既然TIME_WAIT状态的持续时间是MSL的2倍，这就足以让某个方向上的分组最多存活MSL秒即被丢弃，另一个方向上的应答最多存活MSL秒也被丢弃。通过实施这个规则，我们就能保证每成功建立一个TCP连接时，来自该连接先前化身的老的重复分组都已在网络中消逝了。</p>
+
+</div>
+
+<div class="about">
+    <div class="about__devider">*****</div>
+    <div class="about__text">
+        Written by <strong>  WaterWoodFountainhead </strong>
+        on <strong>02 July 2019</strong>
+    </div>
+</div>
+
+
+        </div>
+
+        <script src="/assets/vendor/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+        
+    </body>
+</html>
