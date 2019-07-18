@@ -5,9 +5,122 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Thu, 18 Jul 2019 10:25:51 +0800</pubDate>
-    <lastBuildDate>Thu, 18 Jul 2019 10:25:51 +0800</lastBuildDate>
+    <pubDate>Thu, 18 Jul 2019 12:03:00 +0800</pubDate>
+    <lastBuildDate>Thu, 18 Jul 2019 12:03:00 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Apue]Chapter 10 - c</title>
+        <description>&lt;h1 id=&quot;信号集&quot;&gt;信号集&lt;/h1&gt;
+
+&lt;p&gt;信号集（signal set）是一个能表示多个信号的数据类型。&lt;/p&gt;
+
+&lt;p&gt;一般而言，不能用整型量中的一位代表一种信号，也就是说，不能用一个整型变量表示信号集&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;POSIX.1定义数据类型 sigset_t，它可以包含一个信号集，并且定义了下列 5个处理信号集的函数。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_9.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;函数 sigemptyset 初始化由 set 指向的信号集，清除其中所有信号。&lt;/p&gt;
+
+&lt;p&gt;函数 sigfillset 初始化由 set 指向的信号集，使其包括所有信号。&lt;/p&gt;
+
+&lt;p&gt;函数 sigaddset 将一个信号添加到已有的信号集中。&lt;/p&gt;
+
+&lt;p&gt;函数 sigdelset 则从信号集中删除一个信号。&lt;/p&gt;
+
+&lt;p&gt;函数 sigismember 判断给定的信号（signo 参数），是否时信号集中（set 参数）的一个成员。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）&lt;/strong&gt;所有应用程序在使用信号集前，要对该信号集调用 sigemptyset 或 sigfillset 一次。&lt;/p&gt;
+
+&lt;p&gt;这是因为 C编译程序 把 不赋初值的外部变量和静态变量都初始化为0。一旦初始化了一个信号集，以后就可以在该信号集中操作（增、删）特定的信号。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）&lt;/strong&gt;所有以信号集作为参数的函数，信号集参数通常以指针的形式传递。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;函数-sigprocmask&quot;&gt;函数 sigprocmask&lt;/h1&gt;
+
+&lt;p&gt;调用函数 sigprocmask 可以检测 或 更改，或 同时进行检测和更改进程的信号屏蔽字。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_10.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;参数：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）&lt;/strong&gt;参数 oset&lt;/p&gt;
+
+&lt;p&gt;如果它是非空指针，那么进程的当前信号屏蔽字通过 oset 返回。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）&lt;/strong&gt;参数 set&lt;/p&gt;
+
+&lt;p&gt;a，如果 set 参数是一个非空指针，那么 how 参数表示如何修改当前信号屏蔽字。下图说明了 how 参数可选的值。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_11.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;SIG_BLOCK 是或操作，而SIG_SETMASK 则是赋值操作。注意，不能阻塞 SIGKILL 和 SIGSTOP 信
+号。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;b，如果 set 参数是一个空指针，那么不改变该进程的信号屏蔽字， how 参数的值也没有意义。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;在调用 sigprocmask 函数后，如果有任何（未决的、不再阻塞的）信号，那么在 sigprocmask 函数返回前，至少要把其中的一个信号发送给该进程。&lt;/p&gt;
+
+&lt;p&gt;sigprocmask 函数 仅为单线程定义的。处理多线程进程中的信号屏蔽字，需要使用另一个函数。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;函数-sigpending&quot;&gt;函数 sigpending&lt;/h1&gt;
+
+&lt;p&gt;sigpending 函数返回一个信号集，对于调用进程而言，其中的各个信号是阻塞的、不能传送的。因此，该信号当前是未决的。该信号集通过 set 参数返回。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_12.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;函数-sigaction&quot;&gt;函数 sigaction&lt;/h1&gt;
+
+&lt;p&gt;sigaction 函数的功能是：检查 或 修改 （或 检查并修改）与指定信号相关联的处理动作。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_13.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;参数 signo 是要检测或修改其具体动作的信号编号。&lt;/p&gt;
+
+&lt;p&gt;如果 act 指针参数非空，那么就要修改信号的动作。&lt;/p&gt;
+
+&lt;p&gt;如果 oact 指针参数非空，那么系统经由 oact 指针返回该信号的上一个动作。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;参数 act 和 参数 oact 使用的结构内容，如下：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_14.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 16 Jul 2019 00:59:32 +0800</pubDate>
+        <link>http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-c.html</link>
+        <guid isPermaLink="true">http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-c.html</guid>
+        
+        
+        <category>apue</category>
+        
+      </item>
     
       <item>
         <title>[Apue]Chapter 10 - b</title>
@@ -62,7 +175,7 @@ signal 函数参数：&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_4.png&quot; alt=&quot;它捕捉一个信号，然后设置一个表示该信号已发生的标志&quot; /&gt;&lt;/p&gt;
 
-&lt;p&gt;过程：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;这段代码的含义：&lt;/strong&gt;&lt;/p&gt;
 
 &lt;p&gt;进程调用 pause 函数使自己休眠，直到捕捉到一个信号后苏醒。当捕捉到信号时，信号处理程序将标志 sig_int_flag 设置为非 0 值。从信号处理程序返回后，内核自动将该进程唤醒，它检测到该标志为非 0，然后执行它所需做的。&lt;/p&gt;
 
@@ -296,6 +409,8 @@ signal 函数参数：&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;/images/Apue/APUE_10/APUE_10_8.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;只有执行了一个信号处理程序，并且从此程序返回时，pause才返回。这种情况下，pause 返回 -1，errno 设置为 EINTR。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://waterwoodfountainhead.github.io/apue/2019/07/15/Apue-Chapter-10-c.html&quot;&gt;进入下一篇：《Chapter 10 - c》&lt;/a&gt;&lt;/p&gt;
 
 </description>
         <pubDate>Tue, 16 Jul 2019 00:50:32 +0800</pubDate>
@@ -1557,20 +1672,6 @@ unlocked_ioctl，顾名思义，应该在无大内核锁（BKL）的情况下调
         
         
         <category>apue</category>
-        
-      </item>
-    
-      <item>
-        <title>[Other]First Blog</title>
-        <description>&lt;p&gt;祝愿我自己的质量博文越来越多！
-&lt;img src=&quot;/images/Other/MyImages.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-</description>
-        <pubDate>Thu, 20 Jun 2019 00:38:32 +0800</pubDate>
-        <link>http://localhost:4000/other/2019/06/20/First-Blog.html</link>
-        <guid isPermaLink="true">http://localhost:4000/other/2019/06/20/First-Blog.html</guid>
-        
-        
-        <category>other</category>
         
       </item>
     
