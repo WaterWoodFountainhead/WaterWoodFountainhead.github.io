@@ -18,21 +18,6 @@
   
     
     <url>
-      <loc>http://localhost:4000/unp/2019/07/18/Unp-Chapter-6.html/</loc>
-      
-        <lastmod>2019-07-18T10:00:00+08:00</lastmod>
-      
-      
-        <changefreq>monthly</changefreq>
-      
-      
-        <priority>0.7</priority>
-      
-    </url>
-    
-  
-    
-    <url>
       <loc>http://localhost:4000/apue/2019/07/16/Apue-Chapter-10-c.html/</loc>
       
         <lastmod>2019-07-16T00:59:32+08:00</lastmod>
@@ -203,7 +188,7 @@
     <url>
       <loc>http://localhost:4000/about/</loc>
       
-        <lastmod>2019-07-19T09:51:31+08:00</lastmod>
+        <lastmod>2019-07-19T18:25:24+08:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -218,7 +203,7 @@
     <url>
       <loc>http://localhost:4000/categories/apue/</loc>
       
-        <lastmod>2019-07-19T09:51:31+08:00</lastmod>
+        <lastmod>2019-07-19T18:25:24+08:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -235,7 +220,7 @@
     <url>
       <loc>http://localhost:4000/</loc>
       
-        <lastmod>2019-07-19T09:51:31+08:00</lastmod>
+        <lastmod>2019-07-19T18:25:24+08:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -252,7 +237,7 @@
     <url>
       <loc>http://localhost:4000/categories/other/</loc>
       
-        <lastmod>2019-07-19T09:51:31+08:00</lastmod>
+        <lastmod>2019-07-19T18:25:24+08:00</lastmod>
       
       
         <changefreq>monthly</changefreq>
@@ -271,7 +256,7 @@
     <url>
       <loc>http://localhost:4000/categories/unp/</loc>
       
-        <lastmod>2019-07-19T09:51:31+08:00</lastmod>
+        <lastmod>2019-07-19T18:25:24+08:00</lastmod>
       
       
         <changefreq>monthly</changefreq>

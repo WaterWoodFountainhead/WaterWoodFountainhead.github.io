@@ -5,8 +5,8 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 19 Jul 2019 09:51:31 +0800</pubDate>
-    <lastBuildDate>Fri, 19 Jul 2019 09:51:31 +0800</lastBuildDate>
+    <pubDate>Fri, 19 Jul 2019 18:25:24 +0800</pubDate>
+    <lastBuildDate>Fri, 19 Jul 2019 18:25:24 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
     
       <item>
@@ -137,76 +137,88 @@
 
 &lt;p&gt;&lt;strong&gt;（4）&lt;/strong&gt;如果 接收进程 已经开启了SO_OOBINLINE套接字选项，后来试图通过 指定 MSG_OOB 标志 读入带外数据，读入操作将返回EINVAL。&lt;/p&gt;
 
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;sockatmark-函数&quot;&gt;sockatmark 函数&lt;/h1&gt;
+
+&lt;p&gt;在从套接字读入期间，接收进程通过调用 sockatmark 函数确定是否处于带外标记。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_24/UNP_5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;带外标记的四个特性综合前面提及的并加入新的特性&quot;&gt;带外标记的四个特性：（综合前面提及的，并加入新的特性）&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（1）带外标记总是指向 紧随普通数据最后一个字节后面 的位置。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这意味着&lt;/p&gt;
+
+&lt;p&gt;如果带外数据在线接收，并且下一个准备读入的字节，发送端是使用 MSG_OOB 标记发送它的话。那么，sockatmark 函数返回真。&lt;/p&gt;
+
+&lt;p&gt;如果 SO_OOBINLINE 套接字选项没有开启，并且下一个准备读入的字节，它是紧跟在带外数据后面发送到这里的话。那么，sockatmark 函数返回真。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（2）读操作总是停在带外标记上（TCPv2第519～520页）。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这意味着&lt;/p&gt;
+
+&lt;p&gt;假设在套接字接收缓冲区中有100个字节，不过在带外标记之前只有5个字节。如果进程执行一个请求100个字节的 read 调用，那么返回的是带外标记之前的5个字节。&lt;/p&gt;
+
+&lt;p&gt;这种在带外标记上强制停止读操作的做法，它使得进程能够调用 sockatmark 来确定缓冲区指针是否处于带外标记。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（3）即使因为流量控制而停止发送数据了，TCP 仍然发送带外数据的通知（即它的紧急指针）。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;（4）在带外数据到达之前，接收进程可能被通知，通知内容为发送进程已经发送了带外数据（使用 SIGURG 信号或通过 select ）。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如果接收进程接着指定 MSG_OOB 调用 recv ，而带外数据却尚未到达，recv 将返回 EWOULDBLOCK 错误。&lt;/p&gt;
+
+&lt;p&gt;在&lt;strong&gt;从接收端的角度观察带外数据的接收&lt;/strong&gt;中详细描述。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;关于心搏函数的设计&quot;&gt;关于心搏函数的设计&lt;/h1&gt;
+
+&lt;p&gt;讲解一个简单的心搏函数。这个函数的功能是，它可以发现对端主机 或 到对端的通信路径的过早失效。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;在讲解这些函数之前，必须提出一些警告：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;（1）如果使用 TCP 的保持存活特性（ SO_KEEPALIVE 套接字选项）来提供这种功能，那么 TCP 得在连接已经闲置2小时之后，它才发送一个保持存活探测段。&lt;/p&gt;
+
+&lt;p&gt;关于这种方法，接下来还有一个问题：如何把保持存活的参数改为一个小得多的值（往往是在秒钟的量级），以便更快地检测到失效。&lt;/p&gt;
+
+&lt;p&gt;尽管缩短 TCP 的保持存活的参数在许多系统上确实可行（见TCPv1的附录E），但是，这些参数通常是按照内核，而不是按照每个套接字维护的。因此改动它们将影响所有开启该选项的套接字。另外，保持存活选项的用意绝不是这个目的（高频率地轮询）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;（2）两个端系统之间短暂的连接性丢失并非总是坏事。&lt;/p&gt;
+
+&lt;p&gt;TCP一开始就设计成能够对付临时断连，比如，源自Berkeley的TCP实现将重传8～10分钟才放弃某个连接。较新的IP路由协议（例如 OSPF ）能够发现链接的失效，并且有可能在短时间内（譬如在秒钟量级上）启用候选的路径。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;我们使用 TCP 紧急模式周期地轮询&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;客户每隔1秒钟向服务器发送一个带外字节。服务器收取该字节会导致它向客户发回一个带外字节。&lt;/p&gt;
+
+&lt;p&gt;每端都需要知道对端是否不复存在 或者 不再可达。客户和服务器每1秒钟就递增它们的 cnt 变量一次，每收到一个带外字节，然后把该变量重置为0。如果该计数器达到5，那就认定连接失效，也就是说本进程已有5秒钟没有收到来自对端的带外字节。&lt;/p&gt;
+
+&lt;p&gt;当有带外字节到达时，客户和服务器都使用 SIGURG 信号得以通知。&lt;/p&gt;
+
+&lt;p&gt;详情参考 UNP24-14的代码。&lt;/p&gt;
+
 </description>
         <pubDate>Fri, 19 Jul 2019 01:00:00 +0800</pubDate>
         <link>http://localhost:4000/unp/2019/07/19/Unp-Chapter-24.html</link>
         <guid isPermaLink="true">http://localhost:4000/unp/2019/07/19/Unp-Chapter-24.html</guid>
-        
-        
-        <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Unp]Chapter 6</title>
-        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
-
-&lt;p&gt;I / O 复用典型使用在下列网络应用场合：&lt;/p&gt;
-
-&lt;p&gt;（1）当客户处理多个描述符时，必须使用I/O复用。处理多个描述符的情况，通常是在交互式输入和网络套结字。&lt;/p&gt;
-
-&lt;p&gt;（2）一个客户同时处理多个套接字是可能。比如，web客户的上下文使得可以用select的例子。&lt;/p&gt;
-
-&lt;p&gt;（3）如果一个 TCP 服务器既要处理监听套接字，又要处理已连接套接字，一般就要使用 I/O 复用。&lt;/p&gt;
-
-&lt;p&gt;（4）如果一个服务器既要处理 TCP，又处理 UDP。一般就要使用 I/O 复用。&lt;/p&gt;
-
-&lt;p&gt;（5）如果一个服务器要处理多个服务或多个协议，那么就要使用 I/O 复用。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;io-模型&quot;&gt;I/O 模型&lt;/h1&gt;
-
-&lt;p&gt;Unix 下可用的5种 I/O 模型的基本区别：&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;
-    &lt;p&gt;阻塞式 I/O&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;非阻塞式 I/O&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;I/O 复用（select和poll）&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;信号驱动式 I/O（SIGIO）&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;异步 I/O（POSIX 的 aio__ 系列函数）&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;阻塞式 I/O 模型&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;默认情况下，所有套接字都是阻塞的。&lt;/p&gt;
-
-&lt;p&gt;以数据报套接字为例：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_6/UNP_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;描述：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;进程调用 recvfrom，它的系统调用一直到数据报到达，并且被复制到应用进程的缓冲区中，或者发生错误才返回。&lt;/p&gt;
-
-&lt;p&gt;最常见的错误是系统调用被信号中断，如5.9节所述。我们说进程在从调用recvfrom开始到它返回的整段时间内是被阻塞的。recvfrom成功返回后，应用进程开始处理数据报&lt;/p&gt;
-
-</description>
-        <pubDate>Thu, 18 Jul 2019 10:00:00 +0800</pubDate>
-        <link>http://localhost:4000/unp/2019/07/18/Unp-Chapter-6.html</link>
-        <guid isPermaLink="true">http://localhost:4000/unp/2019/07/18/Unp-Chapter-6.html</guid>
         
         
         <category>unp</category>
@@ -1569,6 +1581,95 @@ signal 函数参数：&lt;/p&gt;
         
         
         <category>unp</category>
+        
+      </item>
+    
+      <item>
+        <title>[Apue]Linux-Sync、Fsync and Fdatasync</title>
+        <description>&lt;h1 id=&quot;在linux操作系统上怎样保证对文件的更新内容成功持久化到硬盘&quot;&gt;在Linux操作系统上，怎样保证对文件的更新内容成功持久化到硬盘？&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;1--write不够需要fsync&quot;&gt;1.  write不够，需要fsync&lt;/h2&gt;
+
+&lt;p&gt;一般情况下，对硬盘（或者其他持久存储设备）文件的write操作，更新的只是内存中的页缓存（page cache）。但是脏页面不会立即更新到硬盘中，而是由操作系统统一调度，如，由专门的flusher内核线程在满足一定条件时（如一定时间间隔、内存中的脏页达到一定比例）内将脏页面同步到硬盘上（放入设备的IO请求队列）。&lt;/p&gt;
+
+&lt;p&gt;因为write调用不会等到硬盘IO完成之后才返回，因此如果OS在write调用之后、硬盘同步之前崩溃，则数据可能丢失。虽然这样的时间窗口很小，但是对于需要保证事务的持久化（durability）和一致性（consistency）的数据库程序来说，write()所提供的“松散的异步语义”是不够的，通常需要OS提供的同步IO（synchronized-IO）原语来保证：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unistd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;fsync的功能是确保文件fd所有已修改的内容已经正确同步到硬盘上，该调用会阻塞等待直到设备报告IO完成。&lt;/p&gt;
+
+&lt;p&gt;注意：如果采用内存映射文件的方式进行文件IO（使用mmap，将文件的page cache直接映射到进程的地址空间，通过写内存的方式修改文件），也有类似的系统调用来确保修改的内容完全同步到硬盘之上：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;incude&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mman&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;msync需要指定同步的地址区间，如此细粒度的控制似乎比fsync更加高效（因为应用程序通常知道自己的脏页位置），但实际上（Linux）kernel中有着十分高效的数据结构，能够很快地找出文件的脏页，使得fsync只会同步文件的修改内容。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;2--fsync的性能问题与fdatasync&quot;&gt;2.  fsync的性能问题，与fdatasync&lt;/h2&gt;
+
+&lt;p&gt;除了同步文件的修改内容（脏页），fsync还会同步文件的描述信息（metadata，包括size、访问时间st_atime &amp;amp; st_mtime等等），因为文件的数据和metadata通常存在硬盘的不同地方，因此fsync至少需要两次IO写操作，fsync的man page这样说：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Unfortunately fsync() will always initialize two write operations : one for the newly written data and another one in order to update the modification time stored in the inode.
+If the modification time is not a part of the transaction concept fdatasync() can be used to avoid unnecessary inode disk write operations.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;多余的一次IO操作，有多么昂贵呢？根据Wikipedia的数据，当前硬盘驱动的平均寻道时间（Average seek time）大约是3~15ms，7200RPM硬盘的平均旋转延迟（Average rotational latency）大约为4ms，因此一次IO操作的耗时大约为10ms左右。这个数字意味着什么？下文还会提到。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;Posix同样定义了fdatasync，放宽了同步的语义以提高性能：&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unistd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fdatasync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Fdatasync的功能与fsync类似，但是仅仅在必要的情况下才会同步metadata，因此可以减少一次IO写操作。那么，什么是“必要的情况”呢？根据man page中的解释：&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;fdatasync does not flush modified metadata unless that metadata is needed in order to allow a subsequent data retrieval to be corretly handled.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;举例来说，文件的尺寸（st_size）如果变化，是需要立即同步的，否则OS一旦崩溃，即使文件的数据部分已同步，由于metadata没有同步，依然读不到修改的内容。而最后访问时间(atime) /修改时间(mtime)是不需要每次都同步的，只要应用程序对这两个时间戳没有苛刻的要求，基本无伤大雅。&lt;/p&gt;
+
+&lt;p&gt;注意：open时的参数O_SYNC/O_DSYNC有着和fsync/fdatasync类似的语义：使每次write都会阻塞等待硬盘IO完成。（实际上，Linux对O_SYNC/O_DSYNC做了相同处理，没有满足Posix的要求，而是都实现了fdatasync的语义）相对于fsync/fdatasync，这样的设置不够灵活，应该很少使用。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;3-使用fdatasync优化日志同步&quot;&gt;3. 使用fdatasync优化日志同步&lt;/h2&gt;
+
+&lt;p&gt;文章开头时已提到，为了满足事务要求，数据库的日志文件是常常需要同步IO的。由于需要同步等待硬盘IO完成，所以事务的提交操作常常十分耗时，成为性能的瓶颈。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;在Berkeley DB下，如果开启了AUTO_COMMIT（所有独立的写操作自动具有事务语义）并使用默认的同步级别（日志完全同步到硬盘才返回），写一条记录的耗时大约为5~10ms级别，基本和一次IO操作（10ms）的耗时相同。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;我们已经知道，在同步上fsync是低效的。但是如果需要使用fdatasync减少对metadata的更新，则需要确保文件的尺寸在write前后没有发生变化。日志文件天生是追加型（append-only）的，总是在不断增大，似乎很难利用好fdatasync。且看Berkeley DB是怎样处理日志文件的：&lt;/p&gt;
+
+&lt;blockquote&gt;
+
+  &lt;p&gt;&lt;br /&gt;1.每个log文件固定为10MB大小，从1开始编号，名称格式为“log.%010d”
+&lt;br /&gt;2.每次log文件创建时，先写文件的最后1个page，将log文件扩展为10MB大小
+&lt;br /&gt;3.向log文件中追加记录时，由于文件的尺寸不发生变化，使用fdatasync可以大大优化写log的效率
+&lt;br /&gt;4.如果一个log文件写满了，则新建一个log文件，也只有一次同步metadata的开销&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;转至：
+&lt;a href=&quot;https://blog.csdn.net/cywosp/article/details/8767327&quot;&gt;《linux 同步IO: sync、fsync与fdatasync》&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Mon, 24 Jun 2019 00:40:32 +0800</pubDate>
+        <link>http://localhost:4000/apue/2019/06/24/Apue-Linux-Sync-Fsync-and-Fdatasync.html</link>
+        <guid isPermaLink="true">http://localhost:4000/apue/2019/06/24/Apue-Linux-Sync-Fsync-and-Fdatasync.html</guid>
+        
+        
+        <category>apue</category>
         
       </item>
     
