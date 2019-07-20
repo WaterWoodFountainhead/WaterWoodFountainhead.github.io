@@ -5,9 +5,120 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 19 Jul 2019 18:25:24 +0800</pubDate>
-    <lastBuildDate>Fri, 19 Jul 2019 18:25:24 +0800</lastBuildDate>
+    <pubDate>Sat, 20 Jul 2019 11:41:37 +0800</pubDate>
+    <lastBuildDate>Sat, 20 Jul 2019 11:41:37 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Unp]Chapter 25</title>
+        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
+
+&lt;p&gt;信号驱动式 I/O 是指：进程预先告知内核，使得当某个描述符上发生某事时，内核使用信号通知相关进程。&lt;/p&gt;
+
+&lt;p&gt;它通常定义为，进程执行 I/O 系统调用（譬如读或写）告知内核启动某个 I/O 操作，内核启动 I/O 操作后立即返回到进程。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;套接字的信号驱动式-io&quot;&gt;套接字的信号驱动式 I/O&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;针对一个套接字使用信号驱动式I/O（SIGIO），它需要进程执行以下3个步骤：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;（1）首先，建立 SIGIO 信号的信号处理函数。&lt;/p&gt;
+
+&lt;p&gt;（2）其次，设置该套接字的属主，通常使用 fcntl 的 F_SETOWN 命令设置。&lt;/p&gt;
+
+&lt;p&gt;（3）最后，开启该套接字的信号驱动式 I/O ，通常通过使用 fcntl 的 F_SETFL 命令打开 O_ASYNC 标志完成。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;确定哪些条件导致内核产生 SIGIO 信号（该信号是递交给套接字属主），这不是容易的事。这种判定取决于支撑协议。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;对于 UDP 套接字的 SIGIO 信号&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;在UDP上使用信号驱动式I/O是简单的。SIGIO信号在发生以下事件时，它会产生：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;数据报到达套接字；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;套接字上发生异步错误。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;因此，当捕获某个 UDP 套接字的 SIGIO 信号时，我们调用 recvfrom 或者 读入到达的数据报，或者 获取发生的异步错误。UDP 套接字发生异步错误的前提是，UDP套接字已连接。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;对于 TCP 套接字的 SIGIO 信号&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;信号驱动式 I/O 对于 TCP 套接字近乎无用。问题在于，该信号产生得过于频繁。并且，它的出现没有告诉我们发生了什么事件。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;如 TCPv2 第439页所注，下列条件都可以导致 TCP 套接字产生 SIGIO 信号（假设该套接字的信号驱动式I/O已经开启）：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;监听套接字上某个连接请求已经完成；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;某个断连请求已经发起；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;某个断连请求已经完成；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;某个连接之半已经关闭；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;数据到达套接字；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;数据已经从套接字发送走（即输出缓冲区有空闲空间）；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;发生某个异步错误。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;我们只考虑对监听 TCP 套接字使用 SIGIO 。因为对于监听套接字产生 SIGIO 的唯一条件是：某个新连接的完成。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;信号驱动式 I/O 对于套接字的唯一现实用途是，基于 UDP 的 NTP 服务器程序。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;大多数UDP服务器都设计成 下图左侧 所示的方式。&lt;/p&gt;
+
+&lt;p&gt;不过，NTP 服务器却采用 下图右侧 所示的技巧。当一个新的数据报到达时，SIGIO 处理函数读入该数据报，同时记录它的到达时刻，然后将它置于进程内的另一个队列中，以便主服务器循环移走并处理。&lt;/p&gt;
+
+&lt;p&gt;尽管服务器代码变复杂了，却为到达数据报提供了精确的时间戳。对 NTP 服务器而言，重要的是，为每个收取的数据报记录精确的时间戳，因为该值将返送给客户，由客户用于计算到服务器的 RTT。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_25/UNP_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;UNP 25.3后面的例子可以多去看看。&lt;/p&gt;
+
+</description>
+        <pubDate>Sat, 20 Jul 2019 07:00:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/07/20/Unp-Chapter-25.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/07/20/Unp-Chapter-25.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
     
       <item>
         <title>[Unp]Chapter 24</title>
@@ -69,7 +180,11 @@
 
 &lt;p&gt;在这个例子中，TCP 的紧急指针指向最后的字节紧后的位置，也就是说，最后的那个字节（字母c）被认为是带外字节。&lt;/p&gt;
 
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;strong&gt;从接收端的角度观察带外数据的接收&lt;/strong&gt;&lt;/p&gt;
 
@@ -1581,95 +1696,6 @@ signal 函数参数：&lt;/p&gt;
         
         
         <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Apue]Linux-Sync、Fsync and Fdatasync</title>
-        <description>&lt;h1 id=&quot;在linux操作系统上怎样保证对文件的更新内容成功持久化到硬盘&quot;&gt;在Linux操作系统上，怎样保证对文件的更新内容成功持久化到硬盘？&lt;/h1&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;1--write不够需要fsync&quot;&gt;1.  write不够，需要fsync&lt;/h2&gt;
-
-&lt;p&gt;一般情况下，对硬盘（或者其他持久存储设备）文件的write操作，更新的只是内存中的页缓存（page cache）。但是脏页面不会立即更新到硬盘中，而是由操作系统统一调度，如，由专门的flusher内核线程在满足一定条件时（如一定时间间隔、内存中的脏页达到一定比例）内将脏页面同步到硬盘上（放入设备的IO请求队列）。&lt;/p&gt;
-
-&lt;p&gt;因为write调用不会等到硬盘IO完成之后才返回，因此如果OS在write调用之后、硬盘同步之前崩溃，则数据可能丢失。虽然这样的时间窗口很小，但是对于需要保证事务的持久化（durability）和一致性（consistency）的数据库程序来说，write()所提供的“松散的异步语义”是不够的，通常需要OS提供的同步IO（synchronized-IO）原语来保证：&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unistd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;fsync的功能是确保文件fd所有已修改的内容已经正确同步到硬盘上，该调用会阻塞等待直到设备报告IO完成。&lt;/p&gt;
-
-&lt;p&gt;注意：如果采用内存映射文件的方式进行文件IO（使用mmap，将文件的page cache直接映射到进程的地址空间，通过写内存的方式修改文件），也有类似的系统调用来确保修改的内容完全同步到硬盘之上：&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;incude&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sys&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mman&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;msync需要指定同步的地址区间，如此细粒度的控制似乎比fsync更加高效（因为应用程序通常知道自己的脏页位置），但实际上（Linux）kernel中有着十分高效的数据结构，能够很快地找出文件的脏页，使得fsync只会同步文件的修改内容。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;2--fsync的性能问题与fdatasync&quot;&gt;2.  fsync的性能问题，与fdatasync&lt;/h2&gt;
-
-&lt;p&gt;除了同步文件的修改内容（脏页），fsync还会同步文件的描述信息（metadata，包括size、访问时间st_atime &amp;amp; st_mtime等等），因为文件的数据和metadata通常存在硬盘的不同地方，因此fsync至少需要两次IO写操作，fsync的man page这样说：&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;Unfortunately fsync() will always initialize two write operations : one for the newly written data and another one in order to update the modification time stored in the inode.
-If the modification time is not a part of the transaction concept fdatasync() can be used to avoid unnecessary inode disk write operations.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;多余的一次IO操作，有多么昂贵呢？根据Wikipedia的数据，当前硬盘驱动的平均寻道时间（Average seek time）大约是3~15ms，7200RPM硬盘的平均旋转延迟（Average rotational latency）大约为4ms，因此一次IO操作的耗时大约为10ms左右。这个数字意味着什么？下文还会提到。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;Posix同样定义了fdatasync，放宽了同步的语义以提高性能：&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unistd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fdatasync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Fdatasync的功能与fsync类似，但是仅仅在必要的情况下才会同步metadata，因此可以减少一次IO写操作。那么，什么是“必要的情况”呢？根据man page中的解释：&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;fdatasync does not flush modified metadata unless that metadata is needed in order to allow a subsequent data retrieval to be corretly handled.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;举例来说，文件的尺寸（st_size）如果变化，是需要立即同步的，否则OS一旦崩溃，即使文件的数据部分已同步，由于metadata没有同步，依然读不到修改的内容。而最后访问时间(atime) /修改时间(mtime)是不需要每次都同步的，只要应用程序对这两个时间戳没有苛刻的要求，基本无伤大雅。&lt;/p&gt;
-
-&lt;p&gt;注意：open时的参数O_SYNC/O_DSYNC有着和fsync/fdatasync类似的语义：使每次write都会阻塞等待硬盘IO完成。（实际上，Linux对O_SYNC/O_DSYNC做了相同处理，没有满足Posix的要求，而是都实现了fdatasync的语义）相对于fsync/fdatasync，这样的设置不够灵活，应该很少使用。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h2 id=&quot;3-使用fdatasync优化日志同步&quot;&gt;3. 使用fdatasync优化日志同步&lt;/h2&gt;
-
-&lt;p&gt;文章开头时已提到，为了满足事务要求，数据库的日志文件是常常需要同步IO的。由于需要同步等待硬盘IO完成，所以事务的提交操作常常十分耗时，成为性能的瓶颈。&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;在Berkeley DB下，如果开启了AUTO_COMMIT（所有独立的写操作自动具有事务语义）并使用默认的同步级别（日志完全同步到硬盘才返回），写一条记录的耗时大约为5~10ms级别，基本和一次IO操作（10ms）的耗时相同。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;我们已经知道，在同步上fsync是低效的。但是如果需要使用fdatasync减少对metadata的更新，则需要确保文件的尺寸在write前后没有发生变化。日志文件天生是追加型（append-only）的，总是在不断增大，似乎很难利用好fdatasync。且看Berkeley DB是怎样处理日志文件的：&lt;/p&gt;
-
-&lt;blockquote&gt;
-
-  &lt;p&gt;&lt;br /&gt;1.每个log文件固定为10MB大小，从1开始编号，名称格式为“log.%010d”
-&lt;br /&gt;2.每次log文件创建时，先写文件的最后1个page，将log文件扩展为10MB大小
-&lt;br /&gt;3.向log文件中追加记录时，由于文件的尺寸不发生变化，使用fdatasync可以大大优化写log的效率
-&lt;br /&gt;4.如果一个log文件写满了，则新建一个log文件，也只有一次同步metadata的开销&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;转至：
-&lt;a href=&quot;https://blog.csdn.net/cywosp/article/details/8767327&quot;&gt;《linux 同步IO: sync、fsync与fdatasync》&lt;/a&gt;&lt;/p&gt;
-</description>
-        <pubDate>Mon, 24 Jun 2019 00:40:32 +0800</pubDate>
-        <link>http://localhost:4000/apue/2019/06/24/Apue-Linux-Sync-Fsync-and-Fdatasync.html</link>
-        <guid isPermaLink="true">http://localhost:4000/apue/2019/06/24/Apue-Linux-Sync-Fsync-and-Fdatasync.html</guid>
-        
-        
-        <category>apue</category>
         
       </item>
     
