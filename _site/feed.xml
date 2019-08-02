@@ -5,9 +5,500 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Sat, 20 Jul 2019 11:41:37 +0800</pubDate>
-    <lastBuildDate>Sat, 20 Jul 2019 11:41:37 +0800</lastBuildDate>
+    <pubDate>Fri, 02 Aug 2019 23:50:27 +0800</pubDate>
+    <lastBuildDate>Fri, 02 Aug 2019 23:50:27 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Unp2]Chapter 2</title>
+        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
+
+&lt;p&gt;有三种类型的 IPC 合称为 “ Posix IPC ”：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Posix消息队列（第5章）；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Posix信号量（第10章）；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Posix共享内存区（第13章）。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Posix IPC在访问它们的函数和描述它们的信息上有一些类似点。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;图2-1汇总了所有Posix IPC函数。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_2/UNP2_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h1 id=&quot;ipc-名字&quot;&gt;IPC 名字&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;在图1-4 中我们指出，三种类型的 Posix IPC 都使用 “Posix IPC名字” 进行标识。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;mq_open、sem_open 和 shm_open 这三个函数的第一个参数就是这样的一个名字，它可能是某个文件系统中的一个真正的路径名，也可能不是。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;Posix.1是这么描述 Posix IPC 名字的。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;它必须符合已有的路径名规则（必须最多由 PATH_MAX 个字节构成，包括结尾的空字节）。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;如果它以斜杠符开头，那么对这些函数的不同调用将访问同一个队列。如果它不以斜杠符开头，那么效果取决于实现。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;名字中额外的斜杠符的解释由实现定义。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;为便于移植起见，Posix IPC 名字必须以一个斜杠符打头，并且不能再含有任何其他斜杠符。遗憾的是这些规则还不够，仍会出现移植性问题&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;当我们指定一个只有单个斜杠符（作为首字符）的名字时，移植性问题就发生了：&lt;/strong&gt;
+我们必须在根目录中具有写权限。&lt;/p&gt;
+
+&lt;p&gt;为避免这些移植性问题，我们应该把 Posix IPC 名字的 #define 行放在一个便于修改的头文件中，这样应用程序转移到另一个系统上时，只需修改这个头文件。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;这是一个标准试图变得相当通用（本例子中，实时标准试图允许消息队列、信号量和共享内存区都在现有的Unix内核中实现，而且在独立的无盘系统上也能工作），结果标准的具体实现却变得不可移植的个例之一。在Posix中，这种现象称为“造成不标准的标准方式” （astandard way of being nonstandard）&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;Posix.1 定义了三个宏：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;S_TYPEISMQ (buf)&lt;/p&gt;
+
+&lt;p&gt;S_TYPEISSEM (buf)&lt;/p&gt;
+
+&lt;p&gt;S_TYPEISSHM (buf)&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+它们的单个参数是指向某个 stat 结构的指针，其内容由 fstat、lstat 或 stat 这三个函数填入。&lt;/p&gt;
+
+&lt;p&gt;如果所指定的 IPC 对象（消息队列、信号量或共享内存区对象）是作为一种独特的文件类型实现的，而且参数所指向的 stat 结构访问这样的文件类型，那么这三个宏计算出一个非零值。否则，计算出的值为0。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;不幸的是，这三个宏没有多大用处，因为无法保证这三种类型的IPC使用一种独特的文件类型实现。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h1 id=&quot;创建与打开-ipc-通道&quot;&gt;创建与打开 IPC 通道&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;mq_open、sem_open 和 shm_open 这三个创建或打开一个 IPC 对象的函数，它们的名为 oflag 的第二个参数指定怎样打开所请求的对象。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这与标准 open 函数的第二个参数类似。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;图2-3 给出了可组合构成该参数的各种常值&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;前3行指定怎样打开对象：只读、只写或读写。消息队列能以其中任何一种模式打开，信号量的打开不指定任何模式（任意信号量操作，都需要读写访问权），共享内存区对象则不能以只写模式打开。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_2/UNP2_2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图2-3中余下4行标志是可选的。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;O_CREAT&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;若不存在则创建由函数第一个参数所指定名字的消息队列、信号量或共享内存区对象（同时检查 O_EXCL 标志，我们不久将要说明）。&lt;/p&gt;
+
+&lt;p&gt;创建一个新的消息队列、信号量或共享内存区对象时，至少需要另外一个称为 mode 的参数。该参数指定权限位，它是由图2-4中所示常值按位或形成的。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_2/UNP2_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;这些常值定义在 &amp;lt;sys/stat.h&amp;gt; 头文件中。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;所指定的权限位受当前进程的文件模式创建掩码（file mode creation mask）修正，而该掩码可通过调用 umask 函数（APUE第83~85页）或使用shell的umask命令来设置。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;跟新创建的文件一样，当创建一个新的消息队列、信号量或共享内存区对象时，其用户ID 被置为当前进程的有效用户ID。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;信号量 或 共享内存区对象的组ID 被置为当前进程的有效组ID （或某个系统默认组ID）。新消息队列对象的组ID则被置为当前进程的有效组ID（APUE第77~78页②详细讨论了 用户ID 和 组ID。）&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;O_EXCL&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如果该标志和 O_CREAT 一起指定，那么 IPC 函数只在所指定名字的消息队列、信号量或共享内存区对象不存在时才创建新的对象。&lt;/p&gt;
+
+&lt;p&gt;如果该对象已经存在，而且指定了  O_CREAT 、 O_EXCL  ，那么返回一个 EEXIST 错误。&lt;/p&gt;
+
+&lt;p&gt;考虑到其他进程的存在，检查（所指定名字的消息队列）、（信号量）或（共享内存区
+对象的是否存在）和 创建它（如果它不存在），这两步必须是原子的（atomic）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;O_NONBLOCK&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;该标志使得一个消息队列在队列为空时的读或队列填满时的写不被阻塞。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;O_TRUNC&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如果以读写模式打开了一个已存在的共享内存区对象，那么该标志将使得该对象的长度被截成0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;图2-5展示了打开一个IPC对象的真正逻辑流程。我们将在2.4节通过访问权限的测试说明该
+图。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图2-6是展示图2-5中逻辑的另一种形式。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_2/UNP2_4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;
+图2-6 指定了 O_CREAT 标志，但是没有指定 O_EXCL 标志的中间那行，因此我们无法得到一个指示以判别是创建了一个新对象，还是在引用一个已存在的对象。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipc-权限&quot;&gt;IPC 权限&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;新的消息队列、有名信号量或共享内存区对象是由其 oflag 参数中含有 O_CREAT 标志的 mq_open 、sem_open 或 shm_open 函数创建的。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;如图2-4所示，权限位与这些 IPC 类型的每个对象相关联，就像它们与每个 Unix 文件相关联一样。&lt;/p&gt;
+
+&lt;p&gt;(1) 创建时赋予该IPC对象的权限位；&lt;/p&gt;
+
+&lt;p&gt;(2) 所请求的访问类型（O_RDONLY、O_WRONLY或O_RDWR）；&lt;/p&gt;
+
+&lt;p&gt;(3) 调用进程的有效用户ID、有效组ID以及各个辅助组ID（若支持的话）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;大多数Unix内核，按如下步骤执行权限测试。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) 如果当前进程的有效用户ID为0（超级用户），那就允许访问。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(2) 在当前进程的 有效用户ID 等于该 IPC对象 的 属主ID 的前提下，如果相应的用户访问权限位已设置，那就允许访问，否则拒绝访问。&lt;/p&gt;
+
+&lt;p&gt;这里相应的访问权限位的意思是：如果当前进程为读访问而打开该 IPC对象，那么用户读权限位必须设置；如果当前进程为写访问而打开该IPC对象，那么用户写权限位必须设置。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(3) 在当前进程的 有效组ID 或它的某个 辅助组ID 等于该 IPC对象 的 组ID 的前提下，如果相应的组访问权限位已设置，那就允许访问，否则拒绝访问。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(4) 如果相应的其他用户访问权限位已设置，那就允许访问，否则拒绝访问。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+这4个步骤是按所列的顺序尝试的。&lt;/p&gt;
+
+&lt;p&gt;因此，如果当前进程拥有该 IPC对象（第2步），那么访问权的授予与拒绝只依赖于用户访问权限——组访问权限绝不会考虑。&lt;/p&gt;
+
+&lt;p&gt;类似地，如果当前进程不拥有该 IPC对象，但它属于某个合适的组，那么访问权的授予 与 拒绝只依赖于组访问权限——其他用户访问权限绝不会考虑。&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 02 Aug 2019 10:01:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/08/02/Unp2-Chapter-2.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/08/02/Unp2-Chapter-2.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
+    
+      <item>
+        <title>[Unp2]Chapter 1</title>
+        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
+
+&lt;p&gt;IPC 是进程间通信（interprocess communication）的简称。传统上该术语描述的是运行在某个操作系统之上的不同进程间各种消息传递（message passing）的方式。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;在Unix操作系统过去30年的演变史中，消息传递历经了如下几个发展阶段：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;管道（pipe，第4章）是第一个广泛使用的IPC形式，既可在程序中使用，也可从 shell 中使用。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;System V 消息队列（System V message queue，第6章）是在20世纪80年代早期加到System V 内核中的。它们可用在同一主机上有亲缘关系或无亲缘关系的进程之间。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Posix消息队列（Posix消息队列，第5章）是由Posix实时标准（1003.1b-1993）加入的。它们可用在同一主机上有亲缘关系和无亲缘关系的进程之间。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;远程过程调用（Remote Procedure Call，RPC，第五部分）出现在20世纪80年代中期，它是从一个系统（客户主机）上某个程序调用另一个系统（服务器主机）上某个函数的一种方法，是作为显式网络编程的一种替换方法开发的。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;看一看由 Unix 提供的各种同步形式的演变同样颇有教益：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;需要某种同步形式（往往是为了防止多个进程同时修改同一文件）的早期程序使用了文件系统的诡秘特性&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;记录上锁（record locking，第9章）是在20世纪80年代早期加到 Unix 内核中的，然后在1988 年由Posix.1标准化的。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;System V 信号量（System V semaphore，第11章）是在System V消息队列加入 System V 内核的同时（20世纪80年代早期）伴随System V共享内存区（System V shared memory）加入的。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Posix 信号量（Posix semaphore，第10章）和 Posix 共享内存区（Posix shared memory，第13章）也由Posix实时标准（1003.1b-1993）加入。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;互斥锁（mutex）和 条件变量（condition variable，第7章）是由 Posix 线程标准（1003.1c-1995）定义的两种同步形式。尽管往往用于线程间的同步，它们也能提供不同进程间的同步。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;读写锁（read-write lock，第8章）是另一种形式的同步。它们还没有被 Posix 标准化，不过也许不久后会被标准化。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;进程线程与信息共享&quot;&gt;进程、线程与信息共享&lt;/h1&gt;
+
+&lt;p&gt;按照传统的 Unix 编程模型，我们在一个系统上运行多个进程，每个进程都有各自的地址空
+间。Unix进程间的信息共享可以有多种方式。图1-1对此作了总结。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) 左边的两个进程共享存留于文件系统中某个文件上的某些信息。&lt;/p&gt;
+
+&lt;p&gt;为访问这些信息，每个进程都得穿越内核（例如 read、write、lseek 等）。&lt;/p&gt;
+
+&lt;p&gt;当一个文件有待更新时，某种形式的同步是必要的，这样既可保护多个写入者，防止相互串扰，也可保护一个或多个读出者，防止写入者的干扰。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(2) 中间的两个进程共享驻留于内核中的某些信息。&lt;/p&gt;
+
+&lt;p&gt;管道是这种共享类型的一个例子，System V 消息队列和 System V信号量也是。&lt;/p&gt;
+
+&lt;p&gt;访问共享信息的每次操作都涉及对内核的一次系统调用。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(3) 右边的两个进程有一个双方都能访问的共享内存区。每个进程一旦设置好该共享内存区，就能根本不涉及内核而访问其中的数据。共享该内存区的进程需要某种形式的同步。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;没有任何东西限制任何IPC技术只能使用两个进程。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipc-对象的持续性&quot;&gt;IPC 对象的持续性&lt;/h1&gt;
+
+&lt;p&gt;我们可以把任意类型的IPC的持续性（persistence）定义成该类型的一个对象一直存在多长
+时间。图1-2展示了三种类型的持续性。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) 随进程持续的（process-persistent）IPC对象&lt;/p&gt;
+
+&lt;p&gt;它一直存在到打开着该对象的最后一个进程关闭该对象为止。例如管道和FIFO就是这种对象。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(2) 随内核持续的（kernel-persistent）IPC对象&lt;/p&gt;
+
+&lt;p&gt;它一直存在到内核重新自举或显式删除该对象为止。例如System V的消息队列、信号量和共享内存区就是此类对象。&lt;/p&gt;
+
+&lt;p&gt;Posix的消息队列、信号量和共享内存区必须至少是随内核持续的，但也可以是随文件系统持续的，具体取决于实现。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+(3) 随文件系统持续的（filesystem-persistent）IPC对象&lt;/p&gt;
+
+&lt;p&gt;它一直存在到显式删除该对象为止。即使内核重新自举了，该对象还是保持其值。&lt;/p&gt;
+
+&lt;p&gt;Posix 消息队列、信号量和共享内存区如果是使用映射文件实现的（不是必需条件），那么它们就是随文件系统持续的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;
+在定义一个 IPC 对象的持续性时我们必须小心，因为它并不总是像看起来的那样。&lt;/p&gt;
+
+&lt;p&gt;例如，管道内的数据是在内核中维护的，但是，管道具备的是随进程的持续性，而不是随内核的持续性：最后一个将某个管道打开着，用于读的进程关闭该管道后，内核将丢弃所有的数据并删除该管道。&lt;/p&gt;
+
+&lt;p&gt;图1-3 汇总了将在本书中讲述的各种类型IPC对象的持续性。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;该列表中没有任何类型的IPC具备随文件系统的持续性，但是我们说过有三种类型的 Posix IPC 可能会具备该持续性，这取决于它们的实现。&lt;/p&gt;
+
+&lt;p&gt;显然，向一个文件写入数据提供了随文件系统的持续性，但这通常不作为一种 IPC 形式使用。多数形式的 IPC 并没有在系统重新自举后继续存在的打算，因为进程不可能跨越重新自举继续存活。&lt;/p&gt;
+
+&lt;p&gt;对于一种给定形式的IPC，要求它具备随文件系统的持续性可能会使其性能降级，而IPC的一个基本的设计目标是高性能&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;名字空间&quot;&gt;名字空间&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;当两个或多个无亲缘关系的进程使用某种类型的 IPC 对象来彼此交换信息时，该 IPC 对象必须有一个某种形式的名字（name）或标识符（identifier）。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这样其中一个进程（往往是服务器）可以创建该IPC对象，其余进程则可以指定同一个IPC对象。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;在以后各章具体讲述其他形式的 IPC 时，我们将使用另外的命名约定。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;对于一种给定的IPC类型，其可能的名字的集合称为它的名字空间（name space）。&lt;/p&gt;
+
+&lt;p&gt;名字空间非常重要，因为对于除普通管道以外的所有形式的IPC来说，名字是客户与服务器彼此连接以交换消息的手段。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+图1-4汇总了不同形式的 IPC 所用的命名约定。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;尽管 Posix.1 标准化了信号量，它们仍然是可选的特性。图1-5 汇总了 Posix.1 和 Unix 98 对各
+种 IPC 特性的说明。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;每种特性有强制、未定义和可选三种选择。对于可选的特性，我们指出了其中每种特性受支持时（通常在 &lt;unistd.h&gt; 头文件中）定义的常值的名字，例如 _ POSIX_THREADS。&lt;/unistd.h&gt;&lt;/p&gt;
+
+&lt;p&gt;注意，Unix 98 是 Posix.1 的超集。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;forkexec-和-exit-对-ipc-对象的影响&quot;&gt;fork、exec 和 exit 对 IPC 对象的影响&lt;/h1&gt;
+
+&lt;p&gt;我们需要理解 fork、exec和 _ exit 函数对于所讨论的各种形式的 IPC 的影响（ _ exit 是由 exit 调用的一个函数）。图1-6对此作了总结。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_6.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;我们需要强调几点。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;首先&lt;/strong&gt;，考虑到无名同步变量（互斥锁、条件变量、读写锁、基于内存的信号量），从一个具有多个线程的进程中调用 fork 将变得混乱不堪。［Butenhof 1997］的6.1节提供了其中的细节。&lt;/p&gt;
+
+&lt;p&gt;我们在表中只是简单地注明：
+如果这些变量驻留在共享内存区中，而且创建时设置了进程间共享属性，那么对于能访问该共
+享内存区的任意进程来说，其任意线程能继续访问这些变量。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;其次&lt;/strong&gt;，System V IPC 的三种形式没有打开或关闭的说法。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;h1 id=&quot;unp2-中-ipc-例子索引表&quot;&gt;UNP2 中 IPC 例子索引表&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;为分析各种特性，全书主要使用了三种交互模式。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;(1) 文件服务器：&lt;/strong&gt;客户-服务器应用程序，客户向服务器发送一个路径名，服务器把该文件
+的内容返回给客户。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;((2) 生产者-消费者：&lt;/strong&gt;一个或多个线程或进程（生产者）把数据放到一个共享缓冲区中，另
+有一个或多个线程或进程（消费者）对该共享缓冲区中的数据进行操作。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;(3) 序列号持续增1：&lt;/strong&gt;一个或多个线程或进程给一个共享的序列号持续增1。该序列号有时在
+一个共享文件中，有时在共享内存区中。&lt;/p&gt;
+
+&lt;p&gt;第一个例子分析各种形式的消息传递，另外两个例子则分析各种类型的同步和共享内存区。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+&lt;strong&gt;为了提供本书所涵盖的不同主题的索引，图1-9、图1-10和图1-11汇总了我们开发的程序及
+它们的源代码所在的起始图号和页码&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_7.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_8.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_9.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 02 Aug 2019 10:00:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/08/02/Unp2-Chapter-1.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/08/02/Unp2-Chapter-1.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
+    
+      <item>
+        <title>[Unp]Chapter 26</title>
+        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
+
+&lt;p&gt;父进程 accept 一个连接，fork 一个子进程，该子进程处理与该连接的客户之间的通信。尽管这种范式多少年来一直用得挺好。但是，fork 调用却存在一些问题：&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+（1）fork 是昂贵的。如今实现使用 写时复制（copy-on-write）的技术。在子进程切实需要自己的副本之前，它避免了把父进程的数据空间复制到子进程。然而即便有这样的优化措施， fork 仍然是昂贵的。&lt;/p&gt;
+
+&lt;p&gt;（2）fork 返回之后，父子进程之间信息的传递需要进程间通信（IPC）机制。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;线程有助于解决这两个问题。线程有时称为 轻权进程（lightweight process），因为线程比进程 “权重轻些”，速度比进程的创建快10～100倍。&lt;/p&gt;
+
+&lt;p&gt;不过，在同一进程内，所有线程共享相同的全局内存。这使得线程之间易于共享信息，然而这种简易性，它会产生同步（synchronization）问题。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;此外，同一进程内的所有线程除了共享全局变量外还共享：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;进程指令；&lt;/li&gt;
+  &lt;li&gt;大多数数据；&lt;/li&gt;
+  &lt;li&gt;打开的文件（即描述符）；&lt;/li&gt;
+  &lt;li&gt;信号处理函数和信号处置；&lt;/li&gt;
+  &lt;li&gt;当前工作目录；&lt;/li&gt;
+  &lt;li&gt;用户ID和组ID。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;不过每个线程有各自的：&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;线程ID；&lt;/li&gt;
+  &lt;li&gt;寄存器集合，包括程序计数器和栈指针；&lt;/li&gt;
+  &lt;li&gt;栈（用于存放局部变量和返回地址）；&lt;/li&gt;
+  &lt;li&gt;errno；&lt;/li&gt;
+  &lt;li&gt;信号掩码；&lt;/li&gt;
+  &lt;li&gt;优先级。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;本文章讲解的是 POSIX 线程，也称为 Pthread。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;基本线程函数创建和终止&quot;&gt;基本线程函数：创建和终止&lt;/h1&gt;
+
+&lt;p&gt;讲解5个基本线程函数。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;pthread_create 函数&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;当一个程序由 exec 启动执行时，称为 初始线程（initial thread）或 主线程（main thread）的单个线程就创建了。其余线程则由 pthread_create 函数创建。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_26/UNP_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;一个进程内的每个线程都由一个线程 ID（thread ID）标识，其数据类型为 pthread_t （往往是unsigned int）。&lt;/strong&gt;如果新的线程成功创建，其 ID 就通过 tid 指针返回。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;每个线程都有许多属性（attribute）：&lt;/strong&gt;优先级、初始栈大小、是否应该成为一个守护线程等等。这可以在创建线程时，我们通过初始化一个取代默认设置的 pthread_attr_t 变量，把它用来指定这些属性。通常情况下，我们采纳默认设置，这时我们把 attr 参数指定为空指针。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;创建一个线程时，我们最后指定的参数是，由该线程执行的函数及其参数。&lt;/strong&gt;该线程通过调用这个函数开始执行，然后，显式地终止（通过调用pthread_exit），或者隐式地终止（通过让该函数返回）。&lt;/p&gt;
+
+&lt;p&gt;该函数的地址由func参数指定，该函数的唯一调用参数是指针 arg。&lt;/p&gt;
+
+&lt;p&gt;如果我们需要给该函数传递多个参数，我们就得把它们打包成一个结构，然后把这个结构的地址作为单个参数传递给这个起始函数.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意func和arg的声明。&lt;/strong&gt; func 所指函数作为参数，它接受一个通用指针(void * )，又作为返回值返回一个通用指针(void * )。这使得我们可以把一个指针传递给线程（指针指向我们期望的任何内容），又允许线程返回一个指针（指针同样指向我们期望的任何内容）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;通常情况下，Pthread函数的返回值成功时为0，出错时为某个非0值。与套接字函数及大多数系统调用出错时返回-1&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 21 Jul 2019 10:00:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/07/21/Unp-Chapter-26.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/07/21/Unp-Chapter-26.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
     
       <item>
         <title>[Unp]Chapter 25</title>
@@ -1288,411 +1779,6 @@ signal 函数参数：&lt;/p&gt;
         <pubDate>Fri, 28 Jun 2019 10:00:00 +0800</pubDate>
         <link>http://localhost:4000/unp/2019/06/28/Unp-Chapter-4.html</link>
         <guid isPermaLink="true">http://localhost:4000/unp/2019/06/28/Unp-Chapter-4.html</guid>
-        
-        
-        <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Unp]Chapter 3</title>
-        <description>&lt;h1 id=&quot;ipv4套接字地址结构&quot;&gt;IPv4套接字地址结构&lt;/h1&gt;
-
-&lt;p&gt;它以sockaddr_in命名，定义在&amp;lt;netinet/in.h&amp;gt;头文件中。如下是它的POSIX定义：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;关于套接字地址结构的一般性说明：&lt;/p&gt;
-
-&lt;p&gt;1）长度字段sin_len是为增加对OSI协议的支持而随4.3BSD-Reno添加的。不过，POSIX规范也不要求有这个成员。该成员的数据类型uint8_t是典型的，符合POSIX的系统都提供这种形式的数据类型。即使有长度字段，我们也无须设置和检查它，除非涉及路由套接字。它是由处理来自不同协议族的套接字地址结构的例程（例如路由表处理代码）在内核中使用的。&lt;/p&gt;
-
-&lt;p&gt;2）POSIX规范只需要这个结构中的3个字段：sin_family、sin_addr和sin_port。对于符合POSIX的实现来说，定义额外的结构字段是可以接受的，这对于网际套接字地址结构来说也是正常的。几乎所有的实现都增加了sin_zero字段，所以所有的套接字地址结构大小都至少是16字节（因为sin_zero是一个带有8个元素长度的char类型的数组）。&lt;/p&gt;
-
-&lt;p&gt;sin_addr字段：in_addr_t数据类型必须是一个至少32位的无符号整数类型。&lt;/p&gt;
-
-&lt;p&gt;sin_port字段：in_port_t必须是一个至少16位的无符号整数类型。&lt;/p&gt;
-
-&lt;p&gt;sin_family字段：sa_family_t数据类型可以是任何无符号整数类型。在支持长度字段的实现中，sa_family_t数据类型通常是一个8位的无符号整数，而在不支持长度字段的实现中，它则是一个16位的无符号整数。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;3，IPv4地址和TCP或UDP端口号在套接字地址结构中总是以网络字节序来存储。&lt;/p&gt;
-
-&lt;p&gt;4，32位IPv4地址存在两种不同的访问方法。第一种：&lt;strong&gt;.sin_addr&lt;/strong&gt; 按 &lt;strong&gt;in_addr&lt;/strong&gt;结构引用其中的32位IPv4地址。第二种：&lt;strong&gt;.sin_addr.s_addr&lt;/strong&gt; 将按 &lt;strong&gt;in_addr_t&lt;/strong&gt;（通常是一个无符号的32位整数）引用同一个32位IPv4地址。&lt;/p&gt;
-
-&lt;p&gt;5，sin_zero字段未曾使用，不过在填写这种套接字地址结构时，我们要把该字段置为0。尤其是，当捆绑一个非通配的IPv4地址时，该字段必须为0。&lt;/p&gt;
-
-&lt;p&gt;6，套接字地址结构仅在给定主机上使用：虽然结构中的某些字段（例如IP地址和端口号）用在不同主机之间的通信中，但是结构本身并不在主机之间传递。因为不同的主机中的地址结构有可能会不同。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;通用套接字地址结构&quot;&gt;通用套接字地址结构&lt;/h1&gt;
-
-&lt;p&gt;在任何套接字函数处理来自所支持的任何协议族的套接字地址结构的指针的时候，会引发一个问题（如何声明函数参数来容纳不同的指针类型？）。&lt;/p&gt;
-
-&lt;p&gt;当然，ANSI C用 void * 解决了通用指针类型的问题。不过在这之前（1982年）采取的办法是在&amp;lt;sys/socket.h&amp;gt;头文件中定义一个通用的套接字地址结构：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;由于套接字函数是在ANSI C之前定义的，因此套接字函数被定义为——以指向某个通用套接字地址结构的一个指针作为其参数之一。这正如bind函数的ANSI C函数原型所示：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;因此，这就要求对套接字地址结构的指针参数进行类型强制转换，变成指向某个通用套接字地址结构的指针，例如：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;从应用层和内核角度看待此情况的强制转换的意义：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;从应用程序开发人员的观点看，这些通用套接字地址结构的唯一用途就是对指向特定于协议的套接字地址结构的指针执行类型强制转换。&lt;/p&gt;
-
-&lt;p&gt;从内核的角度看，使用指向通用套接字地址结构的指针另有原因：内核必须取调用者的指针，把它类型强制转换为 **struct sockaddr * ** 类型，然后检查其中sa_family字段的值来确定这个结构的真实类型。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;ipv6-套接字地址结构&quot;&gt;IPv6 套接字地址结构&lt;/h1&gt;
-
-&lt;p&gt;IPv6套接字地址结构在&amp;lt;netinet/in.h&amp;gt;头文件中定义，如下图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;1，如果系统支持套接字地址结构中的长度字段，那么SIN6_LEN常值必须定义。&lt;/p&gt;
-
-&lt;p&gt;2，IPv6的地址族是AF_INET6，而IPv4的地址族是AF_INET。&lt;/p&gt;
-
-&lt;p&gt;3，结构中字段的先后顺序做过编排。如果 sockaddr_in6 套接字地址结构本身是64位对齐的，那么128位的 sin6_addr 字段也是64位对齐的。在一些64位处理机上，如果64位数据存储在某个64位边界位置，那么对它的访问将得到优化处理。&lt;/p&gt;
-
-&lt;p&gt;4，sin6_flowinfo 字段分成两个字段：（1）低序20位是流标（flow label）。（2）高序12位保留。&lt;/p&gt;
-
-&lt;p&gt;5，对于具备范围的地址（scoped address），sin6_scope_id字段标识其范围（scope），最常见的是链路局部地址（link-local address）的接口索引（interface index）。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;新的通用套接字地址结构&quot;&gt;新的通用套接字地址结构&lt;/h1&gt;
-
-&lt;p&gt;作为IPv6套接字API的一部分而定义的新的通用套接字地址结构克服了现有struct sockaddr的一些缺点。&lt;/p&gt;
-
-&lt;p&gt;新的struct sockaddr_storage足以容纳系统所支持的任何套接字地址结构。sockaddr_storage结构在&amp;lt;netinet/in.h&amp;gt;头文件中定义，如下图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.6.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;新的通用套接字（sockaddr_storage）与旧的（sockaddr）之间的区别：&lt;/p&gt;
-
-&lt;p&gt;1，如果系统支持的任何套接字地址结构有对齐需要，那么sockaddr_storage能够满足最苛刻的对齐要求。&lt;/p&gt;
-
-&lt;p&gt;2，sockaddr_storage足够大，能够容纳系统支持的任何套接字地址结构。
-注意，除了ss_family和ss_len外（如果有的话），sockaddr_storage结构中的其他字段对用户来说是透明的。sockaddr_storage结构必须类型强制转换成（或复制到）适合ss_family字段所给出指针类型的套接字地址结构中，才能访问其他字段。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;套接字地址结构的比较&quot;&gt;套接字地址结构的比较&lt;/h1&gt;
-
-&lt;p&gt;5种套接字地址结构进行比较：IPv4、IPv6、Unix域、数据链路和存储。（Unix域和数据链路以后会提到）&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.2.7.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;说明：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;前两种套接字地址结构是固定长度的。Unix域结构和数据链路结构是可变长度的，为了处理长度可变的结构，我们把一个指针（它指向套接字地址结构）作为参数传递给套接字函数时，也把该套接字地址结构的长度作为另一个参数传递给它。&lt;/p&gt;
-
-&lt;p&gt;我们在每种长度固定的结构下方给出了这种结构的字节数长度。&lt;/p&gt;
-
-&lt;p&gt;不过，Unix域（sockaddr_un）结构本身并非长度可变的，但是其中的信息（即结构中的路径名）却是长度可变的。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;值结果参数&quot;&gt;值—结果参数&lt;/h1&gt;
-
-&lt;p&gt;当一个套接字地址结构的指针作为一个套接字函数的参数时，结构的长度也会作为一个参数来传递，不过其传递方式取决于该结构的传递方向：是从进程到内核，还是从内核到进程。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;从进程到内核：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;有3个函数——bind、connect和sendto。这些函数的一个参数是指向某个套接字地址结构的指针，另一个参数是该结构的整数大小，例如：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;这样内核知道到底需要从进程复制多少数据进来，如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;从内核到进程：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;有4个函数——accept、recvfrom、getsockname 和 getpeername。这四个函数的其中两个参数是指向套接字地址结构和指向该结构长度的指针，例如：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;label style=&quot;color:red&quot;&gt;将长度以指针传递给内核的原因是：&lt;/label&gt;&lt;/p&gt;
-
-&lt;p&gt;当函数被调用时，结构大小是一个值（value），它告诉内核该结构的大小，这样内核在写该结构时不至于越界；当函数返回时，结构大小又是一个结果（result），它告诉进程内核在该结构中究竟存储了多少信息。这种类型的参数称为值—结果（value-result）参数。&lt;/p&gt;
-
-&lt;p&gt;如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.3.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;除这四个函数外，还有其他 值—结果参数相关的函数：&lt;/p&gt;
-
-&lt;p&gt;1，select函数中间的3个参数。&lt;/p&gt;
-
-&lt;p&gt;2，getsockopt函数的长度参数。&lt;/p&gt;
-
-&lt;p&gt;3，ifconf结构中的ifc_len字段。&lt;/p&gt;
-
-&lt;p&gt;4，sysctl函数两个长度参数中的第一个。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;字节排序函数&quot;&gt;字节排序函数&lt;/h1&gt;
-
-&lt;p&gt;由于历史的原因和POSIX规范的规定，套接字地址结构中的某些字段必须按照网络字节序进行维护。因此我们要关注如何在&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;主机字节序和网络字节序(nouns第14条)&lt;/a&gt;之间相互转换。这两种字节序之间的转换使用以下4个函数：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.4.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;h代表host，n代表network，s代表short，l代表long。（short和long这两个称谓是出自4.2BSD的Digital VAX实现的历史产物。）我们应该把s视为一个16位的值（例如TCP或UDP端口号），把l视为一个32位的值（例如IPv4地址）。&lt;/p&gt;
-
-&lt;p&gt;当使用这些函数时，我们并不关心主机字节序和网络字节序的真实值。在那些与网际协议所用字节序（大端）相同的系统中，这四个函数通常被定义为空宏。&lt;/p&gt;
-
-&lt;p&gt;于此同时，我们也应该了解下&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;因特网标准的两条重要约定(nouns第15条)&lt;/a&gt;。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;字节操纵函数&quot;&gt;字节操纵函数&lt;/h1&gt;
-
-&lt;p&gt;名字以b（表示字节）开头的第一组函数起源于4.2BSD，几乎所有现今支持套接字函数的系统仍然提供它们。名字以mem（表示内存）开头的第二组函数起源于ANSI C标准，支持ANSIC函数库的所有系统都提供它们。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;4.2BSD&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.5.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Bzero函数：它把目标字节串中指定数目的字节置为0。我们可以使用该函数来把一个套接字地址结构初始化为0。&lt;/p&gt;
-
-&lt;p&gt;Bcopy函数 ：它将指定数目的字节从源字节串移到目标字节串。&lt;/p&gt;
-
-&lt;p&gt;Bcmp函数：它比较两个任意的字节串，若相同则返回值为0，否则返回值为非0。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;ANSI C函数&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.5.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;Memset函数：它把目标字节串指定数目的字节置为值c。&lt;/p&gt;
-
-&lt;p&gt;Memcpy函数：它类似bcopy，不过两个指针参数的顺序是相反的。&lt;strong&gt;注意&lt;/strong&gt;：当源字节串与目标字节串重叠时，bcopy能够正确处理，但是memcpy的操作结果却不可知。这种情形下必须改用ANSI C的memmove函数。memcpy的赋值顺序（从左往右）：dest = src 。&lt;/p&gt;
-
-&lt;p&gt;Memcmp函数：它比较两个任意的字节串，若相同则返回0，否则返回一个非0值，是大于0还是小于0则取决于第一个不等的字节。注意：比较操作是在假设两个不等的字节均为无符号字符（unsigned char）的前提下完成的。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;两组地址转换函数&quot;&gt;两组地址转换函数&lt;/h1&gt;
-
-&lt;p&gt;有两组函数可以在ASCII字符串（人类偏爱的格式）与网络字节序的二进制值（这是存放在套接字地址结构中的值）之间转换网际地址。&lt;/p&gt;
-
-&lt;p&gt;（1）inet_aton、inet_addr 和 inet_ntoa在点分十进制数串（例如“206.168.112.96”）与它长度为32位的网络字节序二进制值间转换IPv4地址。&lt;/p&gt;
-
-&lt;p&gt;（2）两个较新的函数inet_pton 和 inet_ntop对于IPv4地址和IPv6地址都适用。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;inet_aton、inet_addr 和 inet_ntoa 函数&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.6.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;inet_aton 函数：它将strptr所指C字符串转换成一个32位的网络字节序二进制值，并通过指针addrptr来存储。若成功则返回1，否则返回0。它有一个特性：如果addrptr指针为空，那么该函数仍然对输入的字符串执行有效性检查，但是不存储任何结果。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;inet_addr 函数已被废弃(nouns第16条)。&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;inet_ntoa 函数：它将一个32位的网络字节序二进制IPv4地址转换成相应的点分十进制数串。由该函数的返回值所指向的字符串驻留在静态内存中。这意味着该函数是不可重入的。最后，它的参数是以结构的值传递的，这是很罕见的。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;inet_pton 和 inet_ntop 函数&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;函数名中p和n分别代表表达（presentation）和数值（numeric）。&lt;/p&gt;
-
-&lt;p&gt;地址的表达格式通常是ASCII字符串，数值格式则是存放到套接字地址结构中的二进制值。&lt;/p&gt;
-
-&lt;p&gt;这两个函数的family参数既可以是AF_INET，也可以是AF_INET6。如果以不被支持的地址族作为family参数，这两个函数就都返回一个错误，并将errno置为EAFNOSUPPORT。&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;inet_pton 函数：它尝试转换由strptr指针所指的字符串，并通过addrptr指针存放二进制结果。若成功则返回值为1，否则如果对所指定的family而言输入的字符串不是有效的表达格式，那么返回值为0。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;inet_ntop 函数：它进行相反的转换，从数值格式（addrptr）转换到表达格式（strptr）。len参数是目标存储单元的大小，以免该函数溢出其调用者的缓冲区。为有助于指定这个大小，在&amp;lt;netinet/in.h&amp;gt;头文件中有如下定义：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;em&gt;关于inet_ntop的参数：&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;（1）如果len参数太小，不足以容纳表达格式结果（包括结尾的空字符），那么返回一个空指针，并置errno为ENOSPC。&lt;/p&gt;
-
-&lt;p&gt;（2）它的strptr参数不可以是一个空指针。调用者必须为目标存储单元分配内存并指定其大小。调用成功时，这个指针就是该函数的返回值。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;总结inet_aton、inet_addr 和 inet_ntoa 、inet_pton 和 inet_ntop 函数&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_3/UNP3.7.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-</description>
-        <pubDate>Thu, 27 Jun 2019 10:00:00 +0800</pubDate>
-        <link>http://localhost:4000/unp/2019/06/27/Unp-Chapter-3.html</link>
-        <guid isPermaLink="true">http://localhost:4000/unp/2019/06/27/Unp-Chapter-3.html</guid>
-        
-        
-        <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Unp]Chapter 2</title>
-        <description>&lt;h1 id=&quot;tcp连接终止&quot;&gt;TCP连接终止&lt;/h1&gt;
-
-&lt;p&gt;讲TIME_WAIT前，我们需要了解下&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/26/Unp-Nouns.html&quot;&gt;迷途(Nouns第12条)&lt;/a&gt;和TCP连接终止的过程，如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_2/UNP2.6.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;TCP的终结需要4个分节：&lt;/p&gt;
-
-&lt;p&gt;（1）客户端首先调用close，我们称该端执行主动关闭（active close）。该端的TCP于是发送一个FIN分节，表示数据发送完毕。&lt;/p&gt;
-
-&lt;p&gt;（2）接收到这个FIN的对端执行被动关闭（passive close）。这个FIN由TCP确认。服务端接收FIN意味着服务端的应用进程在相应连接上再无额外数据可接收。&lt;/p&gt;
-
-&lt;p&gt;（3）一段时间后，接收到这个文件结束符的应用进程将调用close关闭它的套接字。这导致它的TCP也发送一个FIN。&lt;/p&gt;
-
-&lt;p&gt;（4）接收这个最终FIN的客户端的TCP（即执行主动关闭的那一端）确认这个FIN。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;time_wait状态&quot;&gt;TIME_WAIT状态&lt;/h1&gt;
-
-&lt;p&gt;先介绍下TIME_WAIT状态：这个状态的持续时间是最长分节生命期（maximum segment lifetime，MSL）的两倍，有时候称之为2MSL。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;那么，TIME_WAIT状态有什么作用呢？&lt;/p&gt;
-
-&lt;p&gt;(1) 可靠地实现TCP全双工连接的终止；&lt;/p&gt;
-
-&lt;p&gt;假设最终的ACK丢失了来解释。服务器将重新发送它的最终那个FIN，因此客户必须维护状态信息，以允许它重新发送最终那个ACK。要是客户不维护状态信息，它将响应以一个RST（另外一种类型的TCP分节），该分节将被服务器解释成一个错误。如果TCP打算执行所有必要的工作以彻底终止某个连接上两个方向的数据流（即全双工关闭），那么它必须正确处理连接终止序列4个分节中任何一个分节丢失的情况。&lt;/p&gt;
-
-&lt;p&gt;这也说明了执行主动关闭的那一端(客户端)由于要重传最后一个ACK，所以是处于TIME_WAIT状态。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;(2) 允许老的重复分节在网络中消逝。&lt;/p&gt;
-
-&lt;p&gt;有时候一个连接可能会在关闭后，又在相同的ip地址和端口之间建立一个连接。因此TCP必须防止这个连接的老的重复分组在该连接已终止后再现，以免被误解成属于同一连接的某个新的化身。&lt;/p&gt;
-
-&lt;p&gt;为此，TCP将不给处于TIME_WAIT状态的连接发起新的化身。既然TIME_WAIT状态的持续时间是MSL的2倍，这就足以让某个方向上的分组最多存活MSL秒即被丢弃，另一个方向上的应答最多存活MSL秒也被丢弃。通过实施这个规则，我们就能保证每成功建立一个TCP连接时，来自该连接先前化身的老的重复分组都已在网络中消逝了。&lt;/p&gt;
-</description>
-        <pubDate>Wed, 26 Jun 2019 16:00:00 +0800</pubDate>
-        <link>http://localhost:4000/unp/2019/06/26/Unp-Chapter-2.html</link>
-        <guid isPermaLink="true">http://localhost:4000/unp/2019/06/26/Unp-Chapter-2.html</guid>
-        
-        
-        <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Unp]Nouns</title>
-        <description>&lt;p&gt;1，&lt;strong&gt;路由器&lt;/strong&gt;是广域网的设备。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;2，&lt;strong&gt;因特网&lt;/strong&gt;是当今最大的广域网。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;3，TCP/IP协议概况&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/NOUNS/NOUNS_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;4，&lt;strong&gt;RFC&lt;/strong&gt;——所有网际协议由一个或多个称为请求评注（Request for Comments，RFC）的文档定义，第三条内容里面的协议就是它们的正式规范。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;5，&lt;strong&gt;IPv4/IPv6主机&lt;/strong&gt; 或 &lt;strong&gt;双栈主机&lt;/strong&gt; 表示同时支持IPv4和IPv6的主机。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;6，&lt;strong&gt;被动打开（passive open）&lt;/strong&gt;，通常通过调用socket、bind和listen这3个函数来完成。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;7，&lt;strong&gt;主动打开（active open）&lt;/strong&gt;，通过调用connect发起。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;8，&lt;strong&gt;SYN&lt;/strong&gt;，一个同步分节。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;9，&lt;strong&gt;ACK&lt;/strong&gt;，一个确认分节。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;10，&lt;strong&gt;主动关闭（active close）&lt;/strong&gt;，某个应用进程首先调用close，称该端执行主动关闭。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;11，&lt;strong&gt;MSL&lt;/strong&gt;，它是任何IP数据报能够在因特网中存活的最长时间。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;12，&lt;strong&gt;迷途&lt;/strong&gt;，通常是路由异常的结果。&lt;/p&gt;
-
-&lt;p&gt;例如：某个路由器崩溃或某两个路由器之间的某个链路断开时，路由协议需花数秒钟到数分钟的时间才能稳定并找出另一条通路。在这段时间内有可能发生路由循环（路由器A把分组发送给路由器B，而B再把它们发送回A），我们关心的分组可能就此陷入这样的循环。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;13，&lt;strong&gt;网际套接字地址结构&lt;/strong&gt;，它是IPv4套接字地址结构，它以sockaddr_in命名。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;14，&lt;strong&gt;小端（little-endian）&lt;/strong&gt;字节序，是将低序字节存储在起始地址的方法；&lt;strong&gt;大端（big-endian）&lt;/strong&gt;字节序，是将高序字节存储在起始地址的方法。如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/NOUNS/NOUNS_14.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;主机字节序&lt;/strong&gt;，是某个给定系统所用的字节序的名称。&lt;/p&gt;
-
-&lt;p&gt;由于网络协议必须制定一个网络字节序（network byte order），其中网际协议使用大端字节序来传送这些多字节整数。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;15，&lt;strong&gt;因特网标准的两个重要约定&lt;/strong&gt;：1）大多数因特网标准使用八位组（octet）这个术语而不是使用字节来表示8位的量。2）另一约定是位序。如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/NOUNS/NOUNS_15.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;它表示按照在线缆上出现的顺序排列4个字节（32个位），最左边的位是最早出现的最高有效位。注意位序的编号从0开始，分配给最高有效位的编号位0。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;16，&lt;strong&gt;inet_addr函数被废弃的原因&lt;/strong&gt;：它进行相同的转换，返回值为32位的网络字节序二进制值。但是，该函数存在两个问题：&lt;/p&gt;
-
-&lt;p&gt;1）当出错时该函数返回 INADDR_NONE常值（通常是一个32位均为1的值）。这意味着点分十进制数串255.255.255.255（这是IPv4的有限广播地址）不能由该函数处理，因为它的二进制值被用来当作该函数的失败返回值。&lt;/p&gt;
-
-&lt;p&gt;2）一些手册页面声明该函数出错时返回-1而不是INADDR_NONE。这样在对该函数的返回值（一个无符号的值）和一个负常值（-1）进行比较时可能会发生问题，具体取决于C编译器。&lt;/p&gt;
-
-</description>
-        <pubDate>Wed, 26 Jun 2019 15:00:00 +0800</pubDate>
-        <link>http://localhost:4000/unp/2019/06/26/Unp-Nouns.html</link>
-        <guid isPermaLink="true">http://localhost:4000/unp/2019/06/26/Unp-Nouns.html</guid>
         
         
         <category>unp</category>

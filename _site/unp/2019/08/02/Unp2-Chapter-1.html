@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title> [Unp2]Chapter 1 — 简介 &raquo;  Fountainhead</title>
+<meta name="description" content="Blog">
+<meta name="keywords" content="">
+<link rel="canonical" href="http://localhost:4000/unp/2019/08/02/Unp2-Chapter-1.html">
+        
+
+
+
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="[Unp2]Chapter 1" />
+<meta name="twitter:description" content="Blog" />
+<meta name="twitter:image" content="http://localhost:4000" />
+
+<!-- Google plus -->
+<meta name="author" content="">
+<link rel="author" href="">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Unp2]Chapter 1">
+<meta property="og:description" content="Blog">
+<meta property="og:url" content="http://localhost:4000/unp/2019/08/02/Unp2-Chapter-1.html">
+<meta property="og:site_name" content="Fountainhead">
+
+        <link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/assets/vendor/normalize-css/normalize.css">
+<link rel="stylesheet" href="/css/main.css">
+
+  <link rel="stylesheet" href="/assets/vendor/highlight/styles/solarized_dark.css">
+
+<link rel="stylesheet" href="/assets/vendor/font-awesome/css/font-awesome.css">
+
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <header class="header">
+    <div class="navigation">
+        <a href="/" class="logo">Fountainhead</a>
+
+        <ul class="menu">
+            <li class="menu__entry"><a href="/about">About</a></li>
+            <li class="menu__entry"><a href="/">Blog</a></li>
+        </ul>
+    </div>
+
+    <ul class="social-links">
+        
+            <a href="https://github.com/WaterWoodFountainhead" class="social-links__entry" target="_blank">
+                <i class="fa fa-github"></i>
+            </a>
+        
+
+        
+    </ul>
+</header>
+
+            <h1 class="page-title post-title">
+    <div class="page-title__text post-title__text">[Unp2]Chapter 1</div>
+    <div class="page-title__subtitle post-title__subtitle">简介</div>
+</h1>
+
+<div class="content">
+    <h1 id="概述">概述</h1>
+
+<p>IPC 是进程间通信（interprocess communication）的简称。传统上该术语描述的是运行在某个操作系统之上的不同进程间各种消息传递（message passing）的方式。</p>
+
+<p><br /></p>
+
+<p>在Unix操作系统过去30年的演变史中，消息传递历经了如下几个发展阶段：</p>
+
+<ul>
+  <li>
+    <p>管道（pipe，第4章）是第一个广泛使用的IPC形式，既可在程序中使用，也可从 shell 中使用。</p>
+  </li>
+  <li>
+    <p>System V 消息队列（System V message queue，第6章）是在20世纪80年代早期加到System V 内核中的。它们可用在同一主机上有亲缘关系或无亲缘关系的进程之间。</p>
+  </li>
+  <li>
+    <p>Posix消息队列（Posix消息队列，第5章）是由Posix实时标准（1003.1b-1993）加入的。它们可用在同一主机上有亲缘关系和无亲缘关系的进程之间。</p>
+  </li>
+  <li>
+    <p>远程过程调用（Remote Procedure Call，RPC，第五部分）出现在20世纪80年代中期，它是从一个系统（客户主机）上某个程序调用另一个系统（服务器主机）上某个函数的一种方法，是作为显式网络编程的一种替换方法开发的。</p>
+  </li>
+</ul>
+
+<p><br /></p>
+
+<p>看一看由 Unix 提供的各种同步形式的演变同样颇有教益：</p>
+
+<ul>
+  <li>
+    <p>需要某种同步形式（往往是为了防止多个进程同时修改同一文件）的早期程序使用了文件系统的诡秘特性</p>
+  </li>
+  <li>
+    <p>记录上锁（record locking，第9章）是在20世纪80年代早期加到 Unix 内核中的，然后在1988 年由Posix.1标准化的。</p>
+  </li>
+  <li>
+    <p>System V 信号量（System V semaphore，第11章）是在System V消息队列加入 System V 内核的同时（20世纪80年代早期）伴随System V共享内存区（System V shared memory）加入的。</p>
+  </li>
+  <li>
+    <p>Posix 信号量（Posix semaphore，第10章）和 Posix 共享内存区（Posix shared memory，第13章）也由Posix实时标准（1003.1b-1993）加入。</p>
+  </li>
+  <li>
+    <p>互斥锁（mutex）和 条件变量（condition variable，第7章）是由 Posix 线程标准（1003.1c-1995）定义的两种同步形式。尽管往往用于线程间的同步，它们也能提供不同进程间的同步。</p>
+  </li>
+  <li>
+    <p>读写锁（read-write lock，第8章）是另一种形式的同步。它们还没有被 Posix 标准化，不过也许不久后会被标准化。</p>
+  </li>
+</ul>
+
+<p><br /><br /></p>
+
+<h1 id="进程线程与信息共享">进程、线程与信息共享</h1>
+
+<p>按照传统的 Unix 编程模型，我们在一个系统上运行多个进程，每个进程都有各自的地址空
+间。Unix进程间的信息共享可以有多种方式。图1-1对此作了总结。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_1.png" alt="" /></p>
+
+<p>(1) 左边的两个进程共享存留于文件系统中某个文件上的某些信息。</p>
+
+<p>为访问这些信息，每个进程都得穿越内核（例如 read、write、lseek 等）。</p>
+
+<p>当一个文件有待更新时，某种形式的同步是必要的，这样既可保护多个写入者，防止相互串扰，也可保护一个或多个读出者，防止写入者的干扰。</p>
+
+<p><br />
+(2) 中间的两个进程共享驻留于内核中的某些信息。</p>
+
+<p>管道是这种共享类型的一个例子，System V 消息队列和 System V信号量也是。</p>
+
+<p>访问共享信息的每次操作都涉及对内核的一次系统调用。</p>
+
+<p><br />
+(3) 右边的两个进程有一个双方都能访问的共享内存区。每个进程一旦设置好该共享内存区，就能根本不涉及内核而访问其中的数据。共享该内存区的进程需要某种形式的同步。</p>
+
+<p><strong>注意：</strong>没有任何东西限制任何IPC技术只能使用两个进程。</p>
+
+<p><br /><br /></p>
+
+<h1 id="ipc-对象的持续性">IPC 对象的持续性</h1>
+
+<p>我们可以把任意类型的IPC的持续性（persistence）定义成该类型的一个对象一直存在多长
+时间。图1-2展示了三种类型的持续性。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_2.png" alt="" /></p>
+
+<p>(1) 随进程持续的（process-persistent）IPC对象</p>
+
+<p>它一直存在到打开着该对象的最后一个进程关闭该对象为止。例如管道和FIFO就是这种对象。</p>
+
+<p><br />
+(2) 随内核持续的（kernel-persistent）IPC对象</p>
+
+<p>它一直存在到内核重新自举或显式删除该对象为止。例如System V的消息队列、信号量和共享内存区就是此类对象。</p>
+
+<p>Posix的消息队列、信号量和共享内存区必须至少是随内核持续的，但也可以是随文件系统持续的，具体取决于实现。</p>
+
+<p><br />
+(3) 随文件系统持续的（filesystem-persistent）IPC对象</p>
+
+<p>它一直存在到显式删除该对象为止。即使内核重新自举了，该对象还是保持其值。</p>
+
+<p>Posix 消息队列、信号量和共享内存区如果是使用映射文件实现的（不是必需条件），那么它们就是随文件系统持续的。</p>
+
+<p><br /><br /><br />
+在定义一个 IPC 对象的持续性时我们必须小心，因为它并不总是像看起来的那样。</p>
+
+<p>例如，管道内的数据是在内核中维护的，但是，管道具备的是随进程的持续性，而不是随内核的持续性：最后一个将某个管道打开着，用于读的进程关闭该管道后，内核将丢弃所有的数据并删除该管道。</p>
+
+<p>图1-3 汇总了将在本书中讲述的各种类型IPC对象的持续性。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_3.png" alt="" /></p>
+
+<p><strong>注意：</strong></p>
+
+<p>该列表中没有任何类型的IPC具备随文件系统的持续性，但是我们说过有三种类型的 Posix IPC 可能会具备该持续性，这取决于它们的实现。</p>
+
+<p>显然，向一个文件写入数据提供了随文件系统的持续性，但这通常不作为一种 IPC 形式使用。多数形式的 IPC 并没有在系统重新自举后继续存在的打算，因为进程不可能跨越重新自举继续存活。</p>
+
+<p>对于一种给定形式的IPC，要求它具备随文件系统的持续性可能会使其性能降级，而IPC的一个基本的设计目标是高性能</p>
+
+<p><br /><br /></p>
+
+<h1 id="名字空间">名字空间</h1>
+
+<p><strong>当两个或多个无亲缘关系的进程使用某种类型的 IPC 对象来彼此交换信息时，该 IPC 对象必须有一个某种形式的名字（name）或标识符（identifier）。</strong></p>
+
+<p>这样其中一个进程（往往是服务器）可以创建该IPC对象，其余进程则可以指定同一个IPC对象。</p>
+
+<p><br /><br />
+<strong>在以后各章具体讲述其他形式的 IPC 时，我们将使用另外的命名约定。</strong></p>
+
+<p>对于一种给定的IPC类型，其可能的名字的集合称为它的名字空间（name space）。</p>
+
+<p>名字空间非常重要，因为对于除普通管道以外的所有形式的IPC来说，名字是客户与服务器彼此连接以交换消息的手段。</p>
+
+<p><br />
+图1-4汇总了不同形式的 IPC 所用的命名约定。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_4.png" alt="" /></p>
+
+<p><br /><br />
+<strong>尽管 Posix.1 标准化了信号量，它们仍然是可选的特性。图1-5 汇总了 Posix.1 和 Unix 98 对各
+种 IPC 特性的说明。</strong></p>
+
+<p>每种特性有强制、未定义和可选三种选择。对于可选的特性，我们指出了其中每种特性受支持时（通常在 <unistd.h> 头文件中）定义的常值的名字，例如 _ POSIX_THREADS。</unistd.h></p>
+
+<p>注意，Unix 98 是 Posix.1 的超集。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_5.png" alt="" /></p>
+
+<p><br /><br /></p>
+
+<h1 id="forkexec-和-exit-对-ipc-对象的影响">fork、exec 和 exit 对 IPC 对象的影响</h1>
+
+<p>我们需要理解 fork、exec和 _ exit 函数对于所讨论的各种形式的 IPC 的影响（ _ exit 是由 exit 调用的一个函数）。图1-6对此作了总结。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_6.png" alt="" /></p>
+
+<p><strong>我们需要强调几点。</strong></p>
+
+<p><strong>首先</strong>，考虑到无名同步变量（互斥锁、条件变量、读写锁、基于内存的信号量），从一个具有多个线程的进程中调用 fork 将变得混乱不堪。［Butenhof 1997］的6.1节提供了其中的细节。</p>
+
+<p>我们在表中只是简单地注明：
+如果这些变量驻留在共享内存区中，而且创建时设置了进程间共享属性，那么对于能访问该共
+享内存区的任意进程来说，其任意线程能继续访问这些变量。</p>
+
+<p><strong>其次</strong>，System V IPC 的三种形式没有打开或关闭的说法。</p>
+
+<p><br /><br /></p>
+<h1 id="unp2-中-ipc-例子索引表">UNP2 中 IPC 例子索引表</h1>
+
+<p><br />
+<strong>为分析各种特性，全书主要使用了三种交互模式。</strong></p>
+
+<p><strong>(1) 文件服务器：</strong>客户-服务器应用程序，客户向服务器发送一个路径名，服务器把该文件
+的内容返回给客户。</p>
+
+<p><strong>((2) 生产者-消费者：</strong>一个或多个线程或进程（生产者）把数据放到一个共享缓冲区中，另
+有一个或多个线程或进程（消费者）对该共享缓冲区中的数据进行操作。</p>
+
+<p><strong>(3) 序列号持续增1：</strong>一个或多个线程或进程给一个共享的序列号持续增1。该序列号有时在
+一个共享文件中，有时在共享内存区中。</p>
+
+<p>第一个例子分析各种形式的消息传递，另外两个例子则分析各种类型的同步和共享内存区。</p>
+
+<p><br /><br />
+<strong>为了提供本书所涵盖的不同主题的索引，图1-9、图1-10和图1-11汇总了我们开发的程序及
+它们的源代码所在的起始图号和页码</strong></p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_7.png" alt="" /></p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_8.png" alt="" /></p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_9.png" alt="" /></p>
+
+
+</div>
+
+<div class="about">
+    <div class="about__devider">*****</div>
+    <div class="about__text">
+        Written by <strong>  WaterWoodFountainhead </strong>
+        on <strong>02 August 2019</strong>
+    </div>
+</div>
+
+
+        </div>
+
+        <script src="/assets/vendor/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+        
+    </body>
+</html>
