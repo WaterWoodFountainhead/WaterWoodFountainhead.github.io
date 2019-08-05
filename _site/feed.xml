@@ -5,9 +5,315 @@
     <description>Blog</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml"/>
-    <pubDate>Fri, 02 Aug 2019 23:50:27 +0800</pubDate>
-    <lastBuildDate>Fri, 02 Aug 2019 23:50:27 +0800</lastBuildDate>
+    <pubDate>Mon, 05 Aug 2019 17:19:08 +0800</pubDate>
+    <lastBuildDate>Mon, 05 Aug 2019 17:19:08 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>[Unp2]Chapter 3</title>
+        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;以下三种类型的IPC合称为System V IPC：&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;System V消息队列（第6章）；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;System V信号量（第11章）；&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;System V共享内存区（第14章）。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;这个称谓作为 这三种 IPC 机制的通称，是因为它们源自System V Unix。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;图3-1 汇总了所有 System V IPC 函数。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;key_t-键和-ftok-函数&quot;&gt;key_t 键和 ftok 函数&lt;/h1&gt;
+
+&lt;p&gt;图1-4 中注明，三种类型的 System V IPC 使用 key_t 值作为它们的名字。头文件&amp;lt;sys/types.h&amp;gt; 把 key_t 这个数据类型定义为一个整数，它至少是一个32位的整数。这些整数值通常是由 ftok函数 赋予的。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_1/UNP2_4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+函数ftok 把一个已存在的路径名和一个整数标识符，转换成一个 key_t 值，称为 IPC键。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;该函数把从 pathname 导出的信息与 id的低序8位 组合成一个整数IPC键。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;该函数假定对于使用System V IPC的某个给定应用来说，客户和服务器同意使用对该应用有一定意义的pathname。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;它可以是服务器守护程序的路径名、服务器使用的某个公共数据文件的路径名或者系统上的某个其他路径名。&lt;/p&gt;
+
+&lt;p&gt;如果客户和服务器之间只需单个 IPC通道，那么可以使用譬如说值为1的 id。&lt;/p&gt;
+
+&lt;p&gt;如果需要多个 IPC通道，比如，从客户到服务器一个通道，从服务器到客户又一个通道。那么作为一个例子，一个通道可使用值为 1的id，另一个通道可使用值为 2的id。&lt;/p&gt;
+
+&lt;p&gt;客户和服务器一旦在 pathname 和 id 上达成一致，双方就都能调用 ftok函数 把 pathname 和 id 转换成同一个 IPC键。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;ftok函数 的典型实现调用 stat函数，然后组合以下三个值。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) pathname 所在的文件系统的信息（stat 结构的 st_dev成员）。&lt;/p&gt;
+
+&lt;p&gt;(2) 该文件在本文件系统内的索引节点号（stat 结构的 st_ino成员）。&lt;/p&gt;
+
+&lt;p&gt;(3) id的低序8位（不能为0）。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Unix 98现在宣称：当 ftok函数 的 id参数 的低序8位为0 时，该函数的行为是未指定的。查看一番后，作者发现 Solaris 和 Digital Unix 中关于 ftok 函数的手册页面也作了同样的声明。作者不知道这是什么时候加上的，而且作者于1991年编写的“System V Interface Definition”中也没有这样的声明。AIX甚至走得更远，若 id 为0，则返回一个错误。实际上 ftok函数 的三种不同实现——System V Release 2、GNU libc 和 BSD/OS——没有一个要求 id为非零：它们只是在 id的低序8位中 作逻辑或，而不管它的值。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;这三个值的组合通常会产生一个32位键。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;不能保证两个不同的路径名与同一个 id 的组合产生不同的键，因为上面所列三个条目（文件系统标识符、索引节点、id）中的信息位数可能大于一个整数的信息位数。&lt;/p&gt;
+
+&lt;p&gt;索引节点绝不会是0，因此，大多数实现把 IPC_PRIVATE定义为0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;如果 pathname 不存在，或者对于调用进程不可访问，ftok函数 就返回−1。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;注意，路径名用于产生键的文件，不能是在服务器存活期间由服务器反复创建并删除的文件，因为该文件每次创建时，由系统赋予的索引节点号很可能不一样。于是，对下一个调用者来说，由 ftok函数 返回的键也可能不同。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipc_perm-结构&quot;&gt;ipc_perm 结构&lt;/h1&gt;
+
+&lt;p&gt;内核给每个 IPC对象 维护一个信息结构，其内容跟内核给文件维护的信息类似。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;该结构以及 System V IPC函数 使用的较为明显的常值，都定义在 &amp;lt;sys/ipc.h&amp;gt;头文件中。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;创建与打开-ipc-通道&quot;&gt;创建与打开 IPC 通道&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;创建或打开一个 IPC对象 的三个 getXXX函数（见图3-1）的第一个 参数key 是类型为 key_t 的 IPC 键，返回值identifier 是一个整数标识符。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;该标识符不同于 ftok函 数的 id参数，我们不久就会看到。对于 key值，应用程序有两种选择。&lt;/p&gt;
+
+&lt;p&gt;(1) 调用 ftok函数，给它传递 pathname 和 id。&lt;/p&gt;
+
+&lt;p&gt;(2) 指定 key 为 IPC_PRIVATE，这将保证会创建一个新的、唯一的 IPC对象。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图3-3展示有关步骤的顺序。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;所有三个 getXXX函数（见图3-1）都有一个名为 oflag的参数，它指定 IPC对象 的读写权限位（ ipc_perm结构 的 mode成员），并选择是创建一个新的 IPC对象 还是访问一个已存在的 IPC对象。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;这种选择的规则如下。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;指定key为 IPC_PRIVATE 能保证创建一个唯一的 IPC对象。没有一对 id 和 pathname 的组合会导致 ftok函数 产生 IPC_PRIVATE 键值。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;设置 oflag参数 的 IPC_CREAT位 ，但不设置它的 IPC_EXCL位 的情况下，如果所指定键的 IPC对象 不存在，那就创建一个新的对象，否则返回该对象。&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;同时设置 oflag参数 的 IPC_CREAT 和 IPC_EXCL位 的情况下，如果所指定键的 IPC对象 不存在，那就创建一个新的对象，否则返回一个 EEXIST错误，因为该对象已存在。&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;对 IPC对象 来说，IPC_CREAT 和 IPC_EXCL 的组合跟 open函数 的O_CREAT和O_EXCL的组合类似。&lt;/p&gt;
+
+&lt;p&gt;设置IPC_EXCL位，但不设置 IPC_CREAT位 是没有意义的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;图3-4展示了打开一个IPC对象的逻辑流程。图3-5 是展示 图3-4 所示逻辑的另一种形式。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_6.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;注意 图3-5 中间只有 IPC_CREAT，而没有 IPC_EXCL 标志的那一行，我们得不到一个指示以判别是创建了一个新对象，还是在引用一个已存在的对象。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;大多数应用程序中，由服务器创建 IPC对象，并指定 IPC_CREAT标志（如果它不关心该对象是否存在）或 【 IPC_CREAT  或 IPC_EXCL标志】（如果它需要检查该对象是否已经存在）。&lt;/p&gt;
+
+&lt;p&gt;客户则不指定其中任何一个标志（它们假定服务器已经创建了该对象）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipc-权限&quot;&gt;IPC 权限&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;
+&lt;strong&gt;每当使用某个 getXXX函数（指定IPC_CREAT标志）创建一个新的 IPC对象 时，以下信息就保存到该对象的 ipc_perm 结构中。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) oflag参数 中 某些位 初始化ipc_perm结构 的 mode成员。图3-6展示了System V三种不同
+IPC机制的权限位（记号»3的意思是将值右移3位）。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_7.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;(2) cuid 和 cgid 成员分别设置为，调用进程的有效用户ID 和 有效组ID。这两个成员合称为，创建者ID（creator ID）。&lt;/p&gt;
+
+&lt;p&gt;(3) ipc_perm 结构的 uid 和 gid 成员也分别设置为，调用进程的有效用户ID 和 有效组ID。这两个成员合称为，属主ID（owner ID）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;尽管一个进程可通过调用相应 IPC机制 ctlXXX函数（所用命令为IPC_SET）修改属主ID，创建者ID 却从不改变。这三个ctlXXX函数 还允许一个进程修改某个 IPC对象 的 mode成员。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;多数实现在&amp;lt;sys/msg.h&amp;gt;、&amp;lt;sys/sem.h&amp;gt;和&amp;lt;sys/shm.h&amp;gt;这三个头文件中定义图3-6中所示的6个常值：MSG_R、MSG_W、SEM_R、SEM_A、SHM_R、SHM_W。不过Unix 98没有这样的要求。SEM_A中的后缀A代表“alter”（改变）。
+&lt;br /&gt;&lt;br /&gt;
+这三个ctlXXX函数 不使用通常的文件模式创建掩码。消息队列、信号量或共享内存区对象的权限准确地设置成由这些函数所指定的值。
+&lt;br /&gt;&lt;br /&gt;
+Posix IPC 并不允许一个 IPC对象 的创建者改变该对象的属主。Posix IPC 中没有类似于 IPC_SET命令 的操作。然而如果 Posix IPC 名字存储在文件系统中，那么超级用户可使用 chown命令 改变其属主。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;每当有一个进程访问某个 IPC对象 时，IPC 就执行两级检查，该 IPC对象 被打开时（getXXX函数）执行一次，以后每次使用该对象时执行一次。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;(1) 每当有一个进程以某个getXXX函数 建立，来访问某个已存在 IPC对象 的通道时，IPC 就执行一次初始检查，验证调用者的 oflag参数 没有指定不在该对象ipc_perm结构mode成员中的任何访问位。这就是图3-4中底部的方框。举例来说，一个服务器进程可以把它的输入消息队列的 mode成员设置成关掉组成员读和其他用户读这两个权限位。&lt;/p&gt;
+
+&lt;p&gt;任何进程调用针对该消息队列的 msgget函数 时，如果所指定的 oflag参数 包含这两位，那么该函数都将返回一个错误。然而由 getXXX函数 完成的这种测试并没有多大用处。它隐含假定调用者知道自己属于哪个权限范畴——用户、组成员或其他用户。&lt;/p&gt;
+
+&lt;p&gt;如果创建者特意关掉了某些权限位，而调用者却指定了这些位，那么 getXXX函数 将检测出这个错误。然而任何进程都能够完全绕过这种检查，其办法是在得知该 IPC对象 已存在后，简单地指定一个值为0的 oflag参数 即可。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;(2) 每次 IPC操作 都对使用该操作的进程执行一次权限测试。&lt;/p&gt;
+
+&lt;p&gt;举例来说，每当有一个进程试图使用 msgsnd函数 往某个消息队列放置一个消息时，msgsnd函数 将以下面所列的顺序执行（多个）测试。一旦某个测试赋予了访问权，其后的测试就不再执行。&lt;/p&gt;
+
+&lt;p&gt;a) 超级用户总是赋予访问权。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+b) 如果当前进程的有效用户ID等于该IPC对象的uid值或cuid值，而且相应的访问位在该 IPC对象 的 mode成员 中是打开的，那么赋予访问权。&lt;/p&gt;
+
+&lt;p&gt;这儿“相应的访问位”的意思是，如果调用者想要在该 IPC对象 上执行一个读操作（例如从某个消息队列接收一个消息），那么读位必须设置，如果想要执行一个写操作，那么写位必须设置。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+c) 如果 当前进程的有效组ID 等于 该IPC对象的gid值或cgid值，而且相应的访问位在该 IPC对象的mode成员 中是打开的，那么赋予访问权。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;
+d) 如果上面的测试没有一个为真，那么相应的 “其他用户” 访问位在该 IPC对象的mode成员 中必须是打开的才能赋予访问权。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;标识符重用&quot;&gt;标识符重用&lt;/h1&gt;
+
+&lt;p&gt;&lt;strong&gt;ipc_perm结构 还含有一个名为 seq的变量，它是一个槽位使用情况序列号。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;该变量是一个由内核为系统中每个潜在的 IPC对象 维护的计数器。每当删除一个 IPC对象 时，内核就递增相应的槽位号，若溢出则循环回0。&lt;/p&gt;
+
+&lt;p&gt;本节讲述的是普通 SVR4 实现。Unix 98 没有强制使用该实现技巧。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;该计数器的存在有两个原因。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;首先，考虑由内核维护的用于打开文件的文件描述符。它们是些小整数，只在单个进程内有意义，也就是它们是进程特定的值。&lt;/p&gt;
+
+&lt;p&gt;其次，如果我们试图从 文件描述符4 读，那么这种尝试只有该进程已在该描述符上打开了一个文件后才会奏效。它对于可能在另外一个与本进程无亲缘关系的进程中打开在 文件描述符4 上的文件来说，根本没有意义。然而，System V IPC标识符 却是系统范围的，而不是特定于进程的。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;我们从某个get函数（msgget、semget和shmget）获得一个IPC标识符（类似于文件描述符）。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这些标识符也是整数，不过它们的意义适用于所有进程。&lt;/p&gt;
+
+&lt;p&gt;举例来说，如果有两个无亲缘关系的进程（一个是客户，一个是服务器）使用单个消息队列，那么由 msgget函数 返回的该消息队列的标识符在双方进程中必须是同一个整数值，这样双方才能访问同一个消息队列。&lt;/p&gt;
+
+&lt;p&gt;这种特性意味着，某个行为不端的进程 可能会从 另外某个应用的消息队列 中读消息。办法是，尝试不同的小整数标识符，以期待找出一个（当前在使用的、允许读访问的）消息队列。&lt;/p&gt;
+
+&lt;p&gt;如果这些标识符的取值是小整数（像文件描述符那样），那么找到一个有效标识符的可能性约为1:50（假设每个进程最多有约50个描述符）。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;为避免这样的问题，这些 IPC机制 的设计者们把标识符值的可能范围扩大到包含所有整数，而不是仅仅包含小整数。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;这种扩大是这么实现的：每次重用一个 IPC表项 时，把返回给调用进程的标识符值增加一个IPC表项数。&lt;/p&gt;
+
+&lt;p&gt;举例来说，如果系统配置成最多50个消息队列，那么内核中的第一个消息队列表项首次被使用时，返回给进程的标识符值为0。该消息队列被删除，从而第一个表项得以重用后，所返回的标识符为50。再下一次重用时，该标识符变为100，如此等等。&lt;/p&gt;
+
+&lt;p&gt;既然，seq变量 通常作为一个无符号长整数实现（见3.3节所示的ipc_perm结构），那么该表项只有在被重用 85 899 346（232/50，假设长整数为32位）次后，才循环回0。&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;递增槽位使用情况序列号的另一个原因是，为了避免短时间内重用 System V IPC标识符。这有助于确保——过早终止的服务器重新启动后，不会重用标识符。&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ipcs-和-ipcrm-程序&quot;&gt;ipcs 和 ipcrm 程序&lt;/h1&gt;
+
+&lt;p&gt;&lt;br /&gt;
+由于 System V IPC 的三种类型不是以文件系统中的路径名标识的，因此使用标准的ls和rm
+程序无法看到它们，也无法删除它们。&lt;/p&gt;
+
+&lt;p&gt;不过实现了这些类型IPC的任何系统都提供两个特殊的程序：ipcs 和 ipcrm。ipcs 输出有关System V IPC特性的各种信息，ipcrm 则删除一个 System V 消息队列、信号量集或共享内存区。ipcs 支持约十来个命令行选项，它们决定报告哪种类型的 IPC 以及输出哪些信息，ipcrm 支持6个命令行选项。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;System V IPC不是Posix中的内容，因此这两个命令也未被Posix.2标准化。不过它们是Unix98的内容。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;内核限制&quot;&gt;内核限制&lt;/h1&gt;
+
+&lt;p&gt;System V IPC 的多数实现有内核限制，例如消息队列的最大数目、每个信号量集的最大信号量数，等等。&lt;/p&gt;
+
+&lt;p&gt;我们将在图6-25、图11-8和图14-5中给出这些限制的某些典型值。&lt;/p&gt;
+
+&lt;p&gt;这些限制通常起源于最初的 System V实现。&lt;/p&gt;
+
+&lt;p&gt;不幸的是，这些对象的大小被内核限制得往往太小。因为其中许多限制起源于在某个小地址空间系统（16位PDP-11）上完成的最初实现。&lt;/p&gt;
+
+&lt;p&gt;然而万幸的是，多数系统允许管理员 部分或完全 修改这些默认限制，但是不同风格的Unix 所需的步骤也不一样。多数系统要求在修改完值后重新自举运行中的内核。尽管如此，某些实现仍然给其中一些限制使用 16位整数，这在无形之中提供了一个难以突破的硬限制。&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+举例来说，Solaris 2.6有20个这些限制。&lt;/p&gt;
+
+&lt;p&gt;它们的当前值可使用 sysdef命令 输出。不过，如果相应的内核模块尚未加载（也就是说尚未使用IPC机制），那么所输出的值为0。它们的值可通过在 /etc/system文件 中加入如下语句来修改，而 /etc/system文件 是自举内核时读入的。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_8.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;等号左边名字中最后6个字符 是列在 图6-25、图11-8和图14-5中的变量名&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
+
+&lt;p&gt;至于Digital Unix 4.0B，sysconfig程序 可用于 查询或修改 许多内核参数和限制。下面是使用-q选项时该程序的输出，它在 ipc子系统 查询内核以输出当前限制值。我们已省略掉了与System V IPC机制无关的一些行。&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Unp2/UNP2_3/UNP2_9.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;这些参数的默认值可通过在 /etc/sysconfigtab文件 中，来指定不同的值来修改。不过，该文件应使用 sysconfigdb程序 维护。该文件是在系统自举时读入的。&lt;/p&gt;
+</description>
+        <pubDate>Sun, 04 Aug 2019 10:01:00 +0800</pubDate>
+        <link>http://localhost:4000/unp/2019/08/04/Unp2-Chapter-3.html</link>
+        <guid isPermaLink="true">http://localhost:4000/unp/2019/08/04/Unp2-Chapter-3.html</guid>
+        
+        
+        <category>unp</category>
+        
+      </item>
     
       <item>
         <title>[Unp2]Chapter 2</title>
@@ -1378,407 +1684,6 @@ signal 函数参数：&lt;/p&gt;
         <pubDate>Tue, 02 Jul 2019 10:00:00 +0800</pubDate>
         <link>http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html</link>
         <guid isPermaLink="true">http://localhost:4000/unp/2019/07/02/Unp-Chapter-5.html</guid>
-        
-        
-        <category>unp</category>
-        
-      </item>
-    
-      <item>
-        <title>[Unp]Chapter 4</title>
-        <description>&lt;h1 id=&quot;概述&quot;&gt;概述&lt;/h1&gt;
-
-&lt;p&gt;下图给出在一对TCP客户与服务器进程之间发生的一些典型事件的时间表。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.1.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;socket-函数&quot;&gt;socket 函数&lt;/h1&gt;
-
-&lt;p&gt;为了执行网络I/O，进程必须做的第一件事情就是调用socket函数，指定通信协议类型（使用IPv4的TCP、使用IPv6的UDP、Unix域字节流协议等）。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.2.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;family参数&lt;/strong&gt;：它指明协议族，它是下图所示的某个常值。该参数也往往被称为协议域。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.2.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;type参数&lt;/strong&gt;：指明套接字类型，它是下图中所示的某个常值。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.2.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;protocol参数&lt;/strong&gt;：应设为下图所示的某个协议类型常值，或者设为0，以选择所给定family和type组合的系统默认值。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.2.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;不过，并非所有套接字 family 与 type 的组合都是有效的，下图给出了一些有效的组合和对应的真正协议。其中标为“是”的项也是有效的，但还没有找到便捷的缩略词。而空白项则是无效组合。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.2.5.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;对比 AF_xxx 和 PF_xxx&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;AF_ 前缀表示地址族，PF_ 前缀表示协议族。&lt;/p&gt;
-
-&lt;p&gt;头文件&amp;lt;sys/socket.h&amp;gt;中为一给定协议定义的 PF_ 值总是与此协议的 AF_ 值相等。尽管这种相等关系并不一定永远成立。为与现存代码保持一致，我们仅使用 AF_ 常值，不过，在调用 socket 时，我们可能会碰到 PF_ 值。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;connect-函数&quot;&gt;connect 函数&lt;/h1&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.3.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;（1）sockfd是由socket函数返回的套接字描述符，第二个、第三个参数分别是一个指向套接字地址结构的指针和该结构的大小。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（2）客户在调用函数connect前不必非得调用bind函数（我们在下一节介绍该函数），因为如果需要的话，内核会确定源IP地址，并选择一个临时端口作为源端口。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（3）如果是TCP套接字，调用connect函数仅在连接建立成功或出错时才返回，其中出错返回可能有以下几种情况：&lt;/p&gt;
-
-&lt;p&gt;①若TCP客户没有收到SYN分节的响应，则返回ETIMEDOUT错误。当我们调用connect函数时，4.4BSD内核发送一个SYN，若无响应则等待6s后再发送一个，若仍无响应则等待24s后再发送一个（TCPv2第828页）。若总共等了75s后，它仍未收到响应则返回本错误。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;②若对客户的SYN的响应是RST（表示复位），则表明该服务器主机在我们指定的端口上没有进程在等待与之连接（例如服务器进程也许没在运行）。这是一种硬错误（hard error），客户一接收到RST就马上返回ECONNREFUSED错误。&lt;/p&gt;
-
-&lt;p&gt;RST是TCP在发生错误时发送的一种TCP分节。产生RST的三个条件是：目的地为某端口的SYN到达，然而该端口上没有正在监听的服务器（如前所述）；TCP想取消一个已有连接；TCP接收到一个根本不存在的连接上的分节。（TCPv1第246～250页有更详细的信息。）&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;③若客户发出的SYN在中间的某个路由器上引发了一个“destination unreachable”（目的地不可达）ICMP错误，则认为是一种软错误（soft error）。&lt;/p&gt;
-
-&lt;p&gt;客户主机内核保存该消息，并按第一种情况中所述的时间间隔继续发送SYN。若在某个规定的时间（4.4BSD规定75s）后仍未收到响应，则把保存的消息（即ICMP错误）作为EHOSTUNREACH或ENETUNREACH错误返回给进程。&lt;/p&gt;
-
-&lt;p&gt;还有两种情形也是有可能的：一是按照本地系统的转发表，根本没有到达远程系统的路径；二是connect调用根本不等待就返回。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;通过一个例子更好的理解上面三种情况：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;首先指定本地主机（127.0.0.1），它正在运行对应的时间获取服务器程序，我们观察正常的输出：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.3.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;接着指定本地子网（192.168.1/24）上其主机ID（100）并不存在的一个IP地址，这样当客户主机发出ARP请求（要求那个不存在的主机响应以其硬件地址）时，它将永远收不到ARP响应：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.3.3.png&quot; alt=&quot;（err_sys函数以直观可读的字符串消息表示了ETIMEDOUT错误的含义）&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;然后，我们指定一个没有运行时间获取服务器程序的主机（其实是一个本地路由器）：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.3.4.png&quot; alt=&quot;（服务器主机立刻响应以一个RST分节）&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;最后，我们指定一个因特网中不可到达的IP地址，那么路由器就会返回主机不可达的ICMP错误：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.3.5.png&quot; alt=&quot;（connect也在等待规定的一段时间之后才返回EHOSTUNREACH错误）&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;bind-函数&quot;&gt;bind 函数&lt;/h1&gt;
-
-&lt;p&gt;bind 函数把一个本地协议地址赋予一个套接字。对于网际网协议，协议地址是32位的IPv4地址或128位的IPv6地址与16位的TCP或UDP端口号的组合。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.4.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;第二个参数是一个指向特定于协议的地址结构的指针，第三个参数是该地址结构的长度。从bind函数返回的一个常见错误是EADDRINUSE（“Address already in use”，地址已使用）。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;对于TCP，调用bind函数可以指定一个端口号，或指定一个IP地址，也可以两者都指定，还可以都不指定。因此，有两点需要注意：&lt;/p&gt;
-
-&lt;p&gt;（1）如果一个TCP客户或服务器未曾调用 bind捆绑一个端口，当调用 connect 或 listen 时，内核就要为相应的套接字选择一个临时端口。让内核来选择临时端口对于TCP客户来说是正常的，除非应用需要一个预留端口（图2-10）；然而对于TCP服务器来说却极为罕见，因为服务器是通过它们的众所周知端口被大家认识的。&lt;/p&gt;
-
-&lt;p&gt;不过，有一个例外——远程过程调用（Remote Procedure Call，RPC）服务器。由内核为它们的监听套接字选择一个临时端口，而该端口随后通过RPC端口映射器进行注册。客户在connect这些服务器之前，必须与端口映射器联系以获取它们的临时端口。这种情况也适用于使用UDP的RPC服务器。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（2）进程可以把一个特定的IP地址捆绑到它的套接字上，不过这个IP地址必须属于其所在主机的网络接口之一。&lt;/p&gt;
-
-&lt;p&gt;对于TCP客户端来说，这就为在该套接字上发送的IP数据报指派了源IP地址。&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;对于TCP服务器，这就限定该套接字只接收那些目的地为这个IP地址的客户连接。TCP客户通常不把IP地址捆绑到它的套接字上。当连接套接字时，内核将根据所用外出网络接口来选择源IP地址，而所用外出接口则取决于到达服务器所需的路径（TCPv2第737页）。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;如果TCP服务器没有把IP地址捆绑到它的套接字上，内核就把客户发送的SYN的目的IP地址作为服务器的源IP地址（TCPv2第943页）。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;下图汇总了根据预期的结果，来设置sin_addr和sin_port或者sin6_addr和sin6_port的值：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.4.2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;对于上图的一些说明：&lt;/p&gt;
-
-&lt;p&gt;（1）如果指定端口号为0，内核会在bind被调用时选择一个临时端口。然而，如果指定IP地址为通配地址，内核将会等到（TCP）套接字已连接 或 已经在（UDP）套接字上发出数据报时，它才选择一个本地IP地址。&lt;/p&gt;
-
-&lt;p&gt;对于IPv4来说，通配地址由常值INADDR_ANY来指定，其值一般为0（由于是网络字节序还是主机字节序，INADDR_ANY的值（为0）都一样，因此使用htonl并非必需）。它告知内核去选择IP地址。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.4.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（2）对于IPv6，我们就不能这么做了，因为128位的IPv6地址是存放在一个结构中的。（在C语言中，赋值语句的右边无法表示常值结构。）为了解决这个问题，我们改写为：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.4.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;系统 预先 分 配 in6addr_any 变量并将其 初始 化为常值 IN6ADDR_ANY_INIT。头文件&amp;lt;netinet/in.h&amp;gt;中含有in6addr_any的extern声明。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（3）如果让内核来为套接字选择一个临时端口号，那么必须注意，函数bind并不返回所选择的
-值。实际上，由于bind函数的第二个参数有const限定词，它无法返回所选之值。为了得到内
-核所选择的这个临时端口值，必须调用函数getsockname来返回协议地址。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;listen-函数&quot;&gt;listen 函数&lt;/h1&gt;
-
-&lt;p&gt;listen函数仅由TCP服务器调用，它做两件事情：&lt;/p&gt;
-
-&lt;p&gt;（1）当socket函数创建一个套接字时，它被假设为一个主动套接字，而 listen 函数把这个未连接的套接字转换成一个被动套接字，指示内核应接受指向该套接字的连接请求。&lt;/p&gt;
-
-&lt;p&gt;根据下图，调用listen导致套接字从CLOSED状态转换到LISTEN状态。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.5.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;(2) 本函数的第二个参数规定了内核应该为相应套接字排队的最大连接个数。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.5.2.png&quot; alt=&quot;（本函数通常应该在调用socket和bind这两个函数之后，并在调用accept函数之前调用）&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;为了理解其中的backlog参数，我们必须认识到内核为任何一个给定的监听套接字维护两个队列：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;(1) 未完成连接队列（incomplete connection queue），每个这样的SYN分节对应其中一项：已由某个客户发出并到达服务器，而服务器正在等待完成相应的TCP三路握手过程。这些套接字处于SYN_RCVD状态。&lt;/p&gt;
-
-&lt;p&gt;(2) 已完成连接队列（completed connection queue），每个已完成TCP三路握手过程的客户对
-应其中一项。这些套接字处于ESTABLISHED状态。&lt;/p&gt;
-
-&lt;p&gt;这两种状态如下图所示：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.5.3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;关于这两个队列的处理，以下几点需要考虑：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;（1）listen函数的backlog参数曾被规定为这两个队列总和的最大值。&lt;/p&gt;
-
-&lt;p&gt;（2）源自Berkeley的实现给backlog增设了一个模糊因子（fudge factor）。&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;把它乘以1.5得到未处理队列最大长度（TCPv1第257页和TCPv2第462页）。举例来说，通常指定为5的backlog值实际上允许最多有8项在排队。&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;如果我们把backlog看成是内核能为某套接字排队的最大已完成连接数目，那么增加模糊因子的理由是，把队列中的未完成连接也计算在内。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（3）不要把backlog定义为0，因为不同的实现对此有不同的解释。如果你不想让任何客户连接到你的监听套接字上，那就关掉该监听套接字。&lt;/p&gt;
-
-&lt;p&gt;（4）在三路握手顺利完成的前提下，未完成连接队列中的任何一项的存留时间就是一个RTT。而RTT的值取决于特定的客户与服务器。&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;TCPv3的14.4节指出，对于一个Web服务器，许多客户与单个服务器之间的中值RTT为187ms。（既然出现一些大值可能显著扭曲均值，对于该统计量通常使用中值。）&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（5）现如今，服务器一天可能要处理几百万个连接，这个4.2BSD支持的最大值 (backlog价为5) 就根本不够了（TCPv3第187～192页）。繁忙的HTTP服务器必须指定一个大得多的backlog值，而且较新的内核必须支持较大的backlog值。&lt;/p&gt;
-
-&lt;p&gt;因此，指定较大backlog值的理由在于：随着客户SYN分节的到达，未完成连接队列中的项数可能增长，它们等着三路握手的完成。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（6）当一个客户端的SYN到达时，若这些队列是满的，服务端TCP就忽略该分节（TCPv2第930～931页），也就是不发送RST。这么做是因为：这种情况是暂时的，客户端TCP将重发SYN，期望不久就能在这些队列中找到可用空间。&lt;/p&gt;
-
-&lt;p&gt;另外，客户端无法区别响应SYN的RST究竟意味着 “该端口没有服务器在监听” ，还是意味着 “该端口有服务器在监听，不过它的队列满了”。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（7）在三路握手完成之后，但在服务器调用accept之前到达的&lt;strong&gt;数据&lt;/strong&gt;应在服务器TCP中排队，最大数据量为相应已连接套接字的接收缓冲区大小。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;实现原理&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;每当在未完成连接队列中创建一项时，来自监听套接字的参数就复制到即将建立的连接中。连接的创建机制是完全自动的，无需服务器进程插手。&lt;/p&gt;
-
-&lt;p&gt;下图展示了用这两个队列建立连接时所交换的分组。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.5.4.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;（1）当来自客户的SYN到达时，TCP在未完成连接队列中创建一个新项。&lt;/p&gt;
-
-&lt;p&gt;（2）然后响应以三路握手的第二个分节：服务器的SYN响应，其中捎带对客户SYN的ACK。&lt;/p&gt;
-
-&lt;p&gt;（3）这个新项一直保留在未完成连接队列中，直到三路握手的第三个分节（客户对服务器SYN的ACK）到达或者该项超时为止。（源自Berkeley的实现为这些未完成连接的项设置的超时值为75 s。&lt;/p&gt;
-
-&lt;p&gt;（4）如果三路握手正常完成，该项就从未完成连接队列移到已完成连接队列的队尾。&lt;/p&gt;
-
-&lt;p&gt;（5）当进程调用 accept 时，已完成连接队列中的队头项将返回给进程，或者如果该队列为空，那么进程将被投入睡眠，直到TCP在该队列中放入一项才唤醒它。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;不同的操作系统，backlog 的意义解释也是不同的，如下图：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.5.4.png&quot; alt=&quot;FreeBSD的算法是backlog值本身加1&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;accept-函数&quot;&gt;accept 函数&lt;/h1&gt;
-
-&lt;p&gt;accept函数由TCP服务器调用，用于从已完成连接队列队头返回下一个已完成连接。如果已完成连接队列为空，那么进程被投入睡眠（假定套接字为默认的阻塞方式）。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.6.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;关于accept 函数有关说明：&lt;/p&gt;
-
-&lt;p&gt;（1）参数 cliaddr 和 addrlen 用来返回已连接的对端进程（客户）的协议地址。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（2）addrlen是&lt;a href=&quot;https://waterwoodfountainhead.github.io/unp/2019/06/27/Unp-Chapter-3.html&quot;&gt;值—结果参数&lt;/a&gt;：调用前，我们将由 * addrlen 所引用的整数值置为由cliaddr所指的套接字地址结构的长度。返回时，该整数值即为由内核存放在该套接字地址结构内的确切字节数。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（3）如果accept成功，那么其返回值是由内核自动生成的一个全新描述符，代表与所返回客户
-的TCP连接。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（4）accept的第一个参数是监听套接字（listening socket）描述符（由socket创建，随后用作bind和listen的第一个参数的描述符）。它的返回值是已连接套接字（connected socket）描述符。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;区分这两个套接字非常重要：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;监听套接字：一个服务器通常仅仅创建一个监听套接字，它在该服务器的生命期内一直存在。&lt;/p&gt;
-
-&lt;p&gt;已连接套接字：内核为服务器进程接受的客户连接创建一个已连接套接字（也就是说对于它的TCP三路握手过程已经完成）。当服务器完成对某个给定客户的服务时（调用close），相应的已连接套接字就被关闭。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（5）accept 函数最多返回三个值：&lt;/p&gt;
-
-&lt;p&gt;①可能是新套接字描述符。&lt;/p&gt;
-
-&lt;p&gt;②可能是出错指示的整数、客户进程的协议地址（由 cliaddr指针参数所指）以及该地址的大小（由 addrlen指针参数所指）。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;并发服务器&quot;&gt;并发服务器&lt;/h1&gt;
-
-&lt;p&gt;使用 fork创建一个典型的并发服务器轮廓，如图：&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.8.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;当一个连接建立时，accept返回，服务器接着调用fork，然后由子进程服务客户（通过已连接套接字connfd），父进程则等待另一个连接（通过监听套接字listenfd）。既然新的客户由子进程提供服务，父进程就关闭已连接套接字。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;为什么上图程序中父进程对 connfd 调用 close 没有终止它与客户的连接呢？&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;我们知道每个文件或套接字都有一个引用计数。socket返回后与listenfd关联的文件表项的引用计数值为1。accept返回后与connfd关联的文件表项的引用计数值也为1。&lt;/p&gt;
-
-&lt;p&gt;在fork返回后，这两个描述符就在父进程与子进程间共享（也就是被复制），因此与这两个套接字相关联的文件表项各自的访问计数值均为2。&lt;/p&gt;
-
-&lt;p&gt;当父进程关闭connfd时，它只是把相应的引用计数值从2减为1。该套接字真正的清理和资源释放
-要等到其引用计数值到达0时才发生。既然引用计数值仍大于0，这个close调用并不引发TCP的四分组连接终止序列。这会在稍后子进程也关闭connfd时发生。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;如果父进程对每个由accept返回的已连接套接字都不调用close，那么并发服务器中将会发生什么？&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;没有一个客户连接会被终止。父进程最终将耗尽可用描述符，因为任何进程在任何时刻可拥有的打开着的描述符数通常是有限制的。同时，这将妨碍TCP连接终止序列的发生，导致连接一直打开着。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;close-函数&quot;&gt;close 函数&lt;/h1&gt;
-
-&lt;p&gt;Unix close函数也用来关闭套接字，并终止TCP连接。&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.9.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;close的默认行为是把该套接字标记成已关闭，然后立即返回到调用进程。该套接字描述符不能再由调用进程使用，也就是说它不能再作为read或write的第一个参数。&lt;/p&gt;
-
-&lt;p&gt;然而TCP将尝试发送（已排队并等待发送到对端的）数据，发送完毕后正常进行TCP连接终止序列。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;h1 id=&quot;getsockname-和-getpeername-函数&quot;&gt;getsockname 和 getpeername 函数&lt;/h1&gt;
-
-&lt;p&gt;&lt;img src=&quot;/images/Unp/UNP_4/UNP4.10.1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;getsockname函数：返回与某个套接字关联的本地协议地址。&lt;/p&gt;
-
-&lt;p&gt;getpeername 函数：返回与某个套接字关联的外地协议地址。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;&lt;/p&gt;
-
-&lt;p&gt;这两个函数的最后一个参数都是 &lt;strong&gt;值-结果参数&lt;/strong&gt;。这就是说，这两个函数都得装填由 localaddr 或 peeraddr指针所指的套接字地址结构。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;需要这两个函数的理由如下：&lt;/p&gt;
-
-&lt;p&gt;（1）在一个没有调用 bind函数的TCP客户端上，connect成功返回后，getsockname用于返回（由内核赋予）该连接的本地IP地址和本地端口号。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（2）在以端口号 0 调用bind（告知内核去选择本地端口号）后，getsockname用于返回由内核赋予的本地端口号。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（3）getsockname可用于获取某个套接字的地址族。例如：&lt;/p&gt;
-
-&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sockfd_to_family&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sockfd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sockaddr_storage&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;5&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;socklen_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;6&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;7&lt;/span&gt;	&lt;span class=&quot;n&quot;&gt;len&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;getsockname&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sockfd&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;SA&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ss_family&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
-&lt;span class=&quot;mi&quot;&gt;11&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;第5行：由于不清楚要分配的套接字地址结构的类型，于是采用sockaddr_storage这个通用结构。因为它能够承载系统支持的任何套接字地址结构。&lt;/p&gt;
-
-&lt;p&gt;第7-10行：我们调用getsockname返回地址族。既然POSIX规范允许对未绑定的套接字调用getsockname，该函数应该适合任何已打开的套接字描述符。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（4）在一个以通配IP地址调用bind的TCP服务器上，与某个客户的连接一旦建立（accept成功返回），getsockname就可以用于返回（由内核赋予）该连接的本地IP地址。&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt;在这样的调用中，套接字描述符参数必须是已连接套接字的描述符，而不是监听套接字的描述符。&lt;/p&gt;
-
-&lt;p&gt;&lt;br /&gt;&lt;/p&gt;
-
-&lt;p&gt;（5）当一个服务器是由调用过accept的某个进程通过调用exec执行程序时，它能够获取客户身份的唯一途径便是调用getpeername。&lt;/p&gt;
-</description>
-        <pubDate>Fri, 28 Jun 2019 10:00:00 +0800</pubDate>
-        <link>http://localhost:4000/unp/2019/06/28/Unp-Chapter-4.html</link>
-        <guid isPermaLink="true">http://localhost:4000/unp/2019/06/28/Unp-Chapter-4.html</guid>
         
         
         <category>unp</category>

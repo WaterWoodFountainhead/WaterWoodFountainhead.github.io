@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title> [Unp2]Chapter 3 — System V IPC &raquo;  Fountainhead</title>
+<meta name="description" content="Blog">
+<meta name="keywords" content="">
+<link rel="canonical" href="http://localhost:4000/unp/2019/08/04/Unp2-Chapter-3.html">
+        
+
+
+
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="[Unp2]Chapter 3" />
+<meta name="twitter:description" content="Blog" />
+<meta name="twitter:image" content="http://localhost:4000" />
+
+<!-- Google plus -->
+<meta name="author" content="">
+<link rel="author" href="">
+
+<!-- Open Graph -->
+<meta property="og:locale" content="">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Unp2]Chapter 3">
+<meta property="og:description" content="Blog">
+<meta property="og:url" content="http://localhost:4000/unp/2019/08/04/Unp2-Chapter-3.html">
+<meta property="og:site_name" content="Fountainhead">
+
+        <link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="/assets/vendor/normalize-css/normalize.css">
+<link rel="stylesheet" href="/css/main.css">
+
+  <link rel="stylesheet" href="/assets/vendor/highlight/styles/solarized_dark.css">
+
+<link rel="stylesheet" href="/assets/vendor/font-awesome/css/font-awesome.css">
+
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <header class="header">
+    <div class="navigation">
+        <a href="/" class="logo">Fountainhead</a>
+
+        <ul class="menu">
+            <li class="menu__entry"><a href="/about">About</a></li>
+            <li class="menu__entry"><a href="/">Blog</a></li>
+        </ul>
+    </div>
+
+    <ul class="social-links">
+        
+            <a href="https://github.com/WaterWoodFountainhead" class="social-links__entry" target="_blank">
+                <i class="fa fa-github"></i>
+            </a>
+        
+
+        
+    </ul>
+</header>
+
+            <h1 class="page-title post-title">
+    <div class="page-title__text post-title__text">[Unp2]Chapter 3</div>
+    <div class="page-title__subtitle post-title__subtitle">System V IPC</div>
+</h1>
+
+<div class="content">
+    <h1 id="概述">概述</h1>
+
+<p><strong>以下三种类型的IPC合称为System V IPC：</strong></p>
+
+<ul>
+  <li>
+    <p>System V消息队列（第6章）；</p>
+  </li>
+  <li>
+    <p>System V信号量（第11章）；</p>
+  </li>
+  <li>
+    <p>System V共享内存区（第14章）。</p>
+  </li>
+</ul>
+
+<p>这个称谓作为 这三种 IPC 机制的通称，是因为它们源自System V Unix。</p>
+
+<p><br /></p>
+
+<p>图3-1 汇总了所有 System V IPC 函数。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_1.png" alt="" /></p>
+
+<p><br /><br /></p>
+
+<h1 id="key_t-键和-ftok-函数">key_t 键和 ftok 函数</h1>
+
+<p>图1-4 中注明，三种类型的 System V IPC 使用 key_t 值作为它们的名字。头文件&lt;sys/types.h&gt; 把 key_t 这个数据类型定义为一个整数，它至少是一个32位的整数。这些整数值通常是由 ftok函数 赋予的。</p>
+
+<p><img src="/images/Unp2/UNP2_1/UNP2_4.png" alt="" /></p>
+
+<p><br />
+函数ftok 把一个已存在的路径名和一个整数标识符，转换成一个 key_t 值，称为 IPC键。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_2.png" alt="" /></p>
+
+<p><strong>该函数把从 pathname 导出的信息与 id的低序8位 组合成一个整数IPC键。</strong></p>
+
+<p><br /></p>
+
+<p><strong>该函数假定对于使用System V IPC的某个给定应用来说，客户和服务器同意使用对该应用有一定意义的pathname。</strong></p>
+
+<p>它可以是服务器守护程序的路径名、服务器使用的某个公共数据文件的路径名或者系统上的某个其他路径名。</p>
+
+<p>如果客户和服务器之间只需单个 IPC通道，那么可以使用譬如说值为1的 id。</p>
+
+<p>如果需要多个 IPC通道，比如，从客户到服务器一个通道，从服务器到客户又一个通道。那么作为一个例子，一个通道可使用值为 1的id，另一个通道可使用值为 2的id。</p>
+
+<p>客户和服务器一旦在 pathname 和 id 上达成一致，双方就都能调用 ftok函数 把 pathname 和 id 转换成同一个 IPC键。</p>
+
+<p><br /></p>
+
+<p><strong>ftok函数 的典型实现调用 stat函数，然后组合以下三个值。</strong></p>
+
+<p>(1) pathname 所在的文件系统的信息（stat 结构的 st_dev成员）。</p>
+
+<p>(2) 该文件在本文件系统内的索引节点号（stat 结构的 st_ino成员）。</p>
+
+<p>(3) id的低序8位（不能为0）。</p>
+
+<blockquote>
+  <p>Unix 98现在宣称：当 ftok函数 的 id参数 的低序8位为0 时，该函数的行为是未指定的。查看一番后，作者发现 Solaris 和 Digital Unix 中关于 ftok 函数的手册页面也作了同样的声明。作者不知道这是什么时候加上的，而且作者于1991年编写的“System V Interface Definition”中也没有这样的声明。AIX甚至走得更远，若 id 为0，则返回一个错误。实际上 ftok函数 的三种不同实现——System V Release 2、GNU libc 和 BSD/OS——没有一个要求 id为非零：它们只是在 id的低序8位中 作逻辑或，而不管它的值。</p>
+</blockquote>
+
+<p><br /></p>
+
+<p><strong>这三个值的组合通常会产生一个32位键。</strong></p>
+
+<p>不能保证两个不同的路径名与同一个 id 的组合产生不同的键，因为上面所列三个条目（文件系统标识符、索引节点、id）中的信息位数可能大于一个整数的信息位数。</p>
+
+<p>索引节点绝不会是0，因此，大多数实现把 IPC_PRIVATE定义为0。</p>
+
+<p><br /></p>
+
+<p><strong>如果 pathname 不存在，或者对于调用进程不可访问，ftok函数 就返回−1。</strong></p>
+
+<p>注意，路径名用于产生键的文件，不能是在服务器存活期间由服务器反复创建并删除的文件，因为该文件每次创建时，由系统赋予的索引节点号很可能不一样。于是，对下一个调用者来说，由 ftok函数 返回的键也可能不同。</p>
+
+<p><br /><br /></p>
+
+<h1 id="ipc_perm-结构">ipc_perm 结构</h1>
+
+<p>内核给每个 IPC对象 维护一个信息结构，其内容跟内核给文件维护的信息类似。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_3.png" alt="" /></p>
+
+<p>该结构以及 System V IPC函数 使用的较为明显的常值，都定义在 &lt;sys/ipc.h&gt;头文件中。</p>
+
+<p><br /><br /></p>
+
+<h1 id="创建与打开-ipc-通道">创建与打开 IPC 通道</h1>
+
+<p><strong>创建或打开一个 IPC对象 的三个 getXXX函数（见图3-1）的第一个 参数key 是类型为 key_t 的 IPC 键，返回值identifier 是一个整数标识符。</strong></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_1.png" alt="" /></p>
+
+<p>该标识符不同于 ftok函 数的 id参数，我们不久就会看到。对于 key值，应用程序有两种选择。</p>
+
+<p>(1) 调用 ftok函数，给它传递 pathname 和 id。</p>
+
+<p>(2) 指定 key 为 IPC_PRIVATE，这将保证会创建一个新的、唯一的 IPC对象。</p>
+
+<p><br /></p>
+
+<p><strong>图3-3展示有关步骤的顺序。</strong></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_4.png" alt="" /></p>
+
+<p><br /></p>
+
+<p><strong>所有三个 getXXX函数（见图3-1）都有一个名为 oflag的参数，它指定 IPC对象 的读写权限位（ ipc_perm结构 的 mode成员），并选择是创建一个新的 IPC对象 还是访问一个已存在的 IPC对象。</strong></p>
+
+<p><strong>这种选择的规则如下。</strong></p>
+
+<ul>
+  <li>
+    <p>指定key为 IPC_PRIVATE 能保证创建一个唯一的 IPC对象。没有一对 id 和 pathname 的组合会导致 ftok函数 产生 IPC_PRIVATE 键值。</p>
+  </li>
+  <li>
+    <p>设置 oflag参数 的 IPC_CREAT位 ，但不设置它的 IPC_EXCL位 的情况下，如果所指定键的 IPC对象 不存在，那就创建一个新的对象，否则返回该对象。</p>
+  </li>
+  <li>
+    <p>同时设置 oflag参数 的 IPC_CREAT 和 IPC_EXCL位 的情况下，如果所指定键的 IPC对象 不存在，那就创建一个新的对象，否则返回一个 EEXIST错误，因为该对象已存在。</p>
+  </li>
+</ul>
+
+<p>对 IPC对象 来说，IPC_CREAT 和 IPC_EXCL 的组合跟 open函数 的O_CREAT和O_EXCL的组合类似。</p>
+
+<p>设置IPC_EXCL位，但不设置 IPC_CREAT位 是没有意义的。</p>
+
+<p><br /></p>
+
+<p><strong>图3-4展示了打开一个IPC对象的逻辑流程。图3-5 是展示 图3-4 所示逻辑的另一种形式。</strong></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_5.png" alt="" /></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_6.png" alt="" /></p>
+
+<p><strong>注意 图3-5 中间只有 IPC_CREAT，而没有 IPC_EXCL 标志的那一行，我们得不到一个指示以判别是创建了一个新对象，还是在引用一个已存在的对象。</strong></p>
+
+<p>大多数应用程序中，由服务器创建 IPC对象，并指定 IPC_CREAT标志（如果它不关心该对象是否存在）或 【 IPC_CREAT  或 IPC_EXCL标志】（如果它需要检查该对象是否已经存在）。</p>
+
+<p>客户则不指定其中任何一个标志（它们假定服务器已经创建了该对象）。</p>
+
+<p><br /><br /></p>
+
+<h1 id="ipc-权限">IPC 权限</h1>
+
+<p><br />
+<strong>每当使用某个 getXXX函数（指定IPC_CREAT标志）创建一个新的 IPC对象 时，以下信息就保存到该对象的 ipc_perm 结构中。</strong></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_3.png" alt="" /></p>
+
+<p>(1) oflag参数 中 某些位 初始化ipc_perm结构 的 mode成员。图3-6展示了System V三种不同
+IPC机制的权限位（记号»3的意思是将值右移3位）。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_7.png" alt="" /></p>
+
+<p>(2) cuid 和 cgid 成员分别设置为，调用进程的有效用户ID 和 有效组ID。这两个成员合称为，创建者ID（creator ID）。</p>
+
+<p>(3) ipc_perm 结构的 uid 和 gid 成员也分别设置为，调用进程的有效用户ID 和 有效组ID。这两个成员合称为，属主ID（owner ID）。</p>
+
+<p><br /></p>
+
+<p><strong>尽管一个进程可通过调用相应 IPC机制 ctlXXX函数（所用命令为IPC_SET）修改属主ID，创建者ID 却从不改变。这三个ctlXXX函数 还允许一个进程修改某个 IPC对象 的 mode成员。</strong></p>
+
+<blockquote>
+  <p>多数实现在&lt;sys/msg.h&gt;、&lt;sys/sem.h&gt;和&lt;sys/shm.h&gt;这三个头文件中定义图3-6中所示的6个常值：MSG_R、MSG_W、SEM_R、SEM_A、SHM_R、SHM_W。不过Unix 98没有这样的要求。SEM_A中的后缀A代表“alter”（改变）。
+<br /><br />
+这三个ctlXXX函数 不使用通常的文件模式创建掩码。消息队列、信号量或共享内存区对象的权限准确地设置成由这些函数所指定的值。
+<br /><br />
+Posix IPC 并不允许一个 IPC对象 的创建者改变该对象的属主。Posix IPC 中没有类似于 IPC_SET命令 的操作。然而如果 Posix IPC 名字存储在文件系统中，那么超级用户可使用 chown命令 改变其属主。</p>
+</blockquote>
+
+<p><strong>每当有一个进程访问某个 IPC对象 时，IPC 就执行两级检查，该 IPC对象 被打开时（getXXX函数）执行一次，以后每次使用该对象时执行一次。</strong></p>
+
+<p>(1) 每当有一个进程以某个getXXX函数 建立，来访问某个已存在 IPC对象 的通道时，IPC 就执行一次初始检查，验证调用者的 oflag参数 没有指定不在该对象ipc_perm结构mode成员中的任何访问位。这就是图3-4中底部的方框。举例来说，一个服务器进程可以把它的输入消息队列的 mode成员设置成关掉组成员读和其他用户读这两个权限位。</p>
+
+<p>任何进程调用针对该消息队列的 msgget函数 时，如果所指定的 oflag参数 包含这两位，那么该函数都将返回一个错误。然而由 getXXX函数 完成的这种测试并没有多大用处。它隐含假定调用者知道自己属于哪个权限范畴——用户、组成员或其他用户。</p>
+
+<p>如果创建者特意关掉了某些权限位，而调用者却指定了这些位，那么 getXXX函数 将检测出这个错误。然而任何进程都能够完全绕过这种检查，其办法是在得知该 IPC对象 已存在后，简单地指定一个值为0的 oflag参数 即可。</p>
+
+<p><br /></p>
+
+<p>(2) 每次 IPC操作 都对使用该操作的进程执行一次权限测试。</p>
+
+<p>举例来说，每当有一个进程试图使用 msgsnd函数 往某个消息队列放置一个消息时，msgsnd函数 将以下面所列的顺序执行（多个）测试。一旦某个测试赋予了访问权，其后的测试就不再执行。</p>
+
+<p>a) 超级用户总是赋予访问权。</p>
+
+<p><br />
+b) 如果当前进程的有效用户ID等于该IPC对象的uid值或cuid值，而且相应的访问位在该 IPC对象 的 mode成员 中是打开的，那么赋予访问权。</p>
+
+<p>这儿“相应的访问位”的意思是，如果调用者想要在该 IPC对象 上执行一个读操作（例如从某个消息队列接收一个消息），那么读位必须设置，如果想要执行一个写操作，那么写位必须设置。</p>
+
+<p><br />
+c) 如果 当前进程的有效组ID 等于 该IPC对象的gid值或cgid值，而且相应的访问位在该 IPC对象的mode成员 中是打开的，那么赋予访问权。</p>
+
+<p><br />
+d) 如果上面的测试没有一个为真，那么相应的 “其他用户” 访问位在该 IPC对象的mode成员 中必须是打开的才能赋予访问权。</p>
+
+<p><br /><br /></p>
+
+<h1 id="标识符重用">标识符重用</h1>
+
+<p><strong>ipc_perm结构 还含有一个名为 seq的变量，它是一个槽位使用情况序列号。</strong></p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_3.png" alt="" /></p>
+
+<p>该变量是一个由内核为系统中每个潜在的 IPC对象 维护的计数器。每当删除一个 IPC对象 时，内核就递增相应的槽位号，若溢出则循环回0。</p>
+
+<p>本节讲述的是普通 SVR4 实现。Unix 98 没有强制使用该实现技巧。</p>
+
+<p><br /></p>
+
+<p><strong>该计数器的存在有两个原因。</strong></p>
+
+<p>首先，考虑由内核维护的用于打开文件的文件描述符。它们是些小整数，只在单个进程内有意义，也就是它们是进程特定的值。</p>
+
+<p>其次，如果我们试图从 文件描述符4 读，那么这种尝试只有该进程已在该描述符上打开了一个文件后才会奏效。它对于可能在另外一个与本进程无亲缘关系的进程中打开在 文件描述符4 上的文件来说，根本没有意义。然而，System V IPC标识符 却是系统范围的，而不是特定于进程的。</p>
+
+<p><br /></p>
+
+<p><strong>我们从某个get函数（msgget、semget和shmget）获得一个IPC标识符（类似于文件描述符）。</strong></p>
+
+<p>这些标识符也是整数，不过它们的意义适用于所有进程。</p>
+
+<p>举例来说，如果有两个无亲缘关系的进程（一个是客户，一个是服务器）使用单个消息队列，那么由 msgget函数 返回的该消息队列的标识符在双方进程中必须是同一个整数值，这样双方才能访问同一个消息队列。</p>
+
+<p>这种特性意味着，某个行为不端的进程 可能会从 另外某个应用的消息队列 中读消息。办法是，尝试不同的小整数标识符，以期待找出一个（当前在使用的、允许读访问的）消息队列。</p>
+
+<p>如果这些标识符的取值是小整数（像文件描述符那样），那么找到一个有效标识符的可能性约为1:50（假设每个进程最多有约50个描述符）。</p>
+
+<p><br /></p>
+
+<p><strong>为避免这样的问题，这些 IPC机制 的设计者们把标识符值的可能范围扩大到包含所有整数，而不是仅仅包含小整数。</strong></p>
+
+<p>这种扩大是这么实现的：每次重用一个 IPC表项 时，把返回给调用进程的标识符值增加一个IPC表项数。</p>
+
+<p>举例来说，如果系统配置成最多50个消息队列，那么内核中的第一个消息队列表项首次被使用时，返回给进程的标识符值为0。该消息队列被删除，从而第一个表项得以重用后，所返回的标识符为50。再下一次重用时，该标识符变为100，如此等等。</p>
+
+<p>既然，seq变量 通常作为一个无符号长整数实现（见3.3节所示的ipc_perm结构），那么该表项只有在被重用 85 899 346（232/50，假设长整数为32位）次后，才循环回0。</p>
+
+<p><br /></p>
+
+<p><strong>递增槽位使用情况序列号的另一个原因是，为了避免短时间内重用 System V IPC标识符。这有助于确保——过早终止的服务器重新启动后，不会重用标识符。</strong></p>
+
+<p><br /><br /></p>
+
+<h1 id="ipcs-和-ipcrm-程序">ipcs 和 ipcrm 程序</h1>
+
+<p><br />
+由于 System V IPC 的三种类型不是以文件系统中的路径名标识的，因此使用标准的ls和rm
+程序无法看到它们，也无法删除它们。</p>
+
+<p>不过实现了这些类型IPC的任何系统都提供两个特殊的程序：ipcs 和 ipcrm。ipcs 输出有关System V IPC特性的各种信息，ipcrm 则删除一个 System V 消息队列、信号量集或共享内存区。ipcs 支持约十来个命令行选项，它们决定报告哪种类型的 IPC 以及输出哪些信息，ipcrm 支持6个命令行选项。</p>
+
+<blockquote>
+  <p>System V IPC不是Posix中的内容，因此这两个命令也未被Posix.2标准化。不过它们是Unix98的内容。</p>
+</blockquote>
+
+<p><br /><br /></p>
+
+<h1 id="内核限制">内核限制</h1>
+
+<p>System V IPC 的多数实现有内核限制，例如消息队列的最大数目、每个信号量集的最大信号量数，等等。</p>
+
+<p>我们将在图6-25、图11-8和图14-5中给出这些限制的某些典型值。</p>
+
+<p>这些限制通常起源于最初的 System V实现。</p>
+
+<p>不幸的是，这些对象的大小被内核限制得往往太小。因为其中许多限制起源于在某个小地址空间系统（16位PDP-11）上完成的最初实现。</p>
+
+<p>然而万幸的是，多数系统允许管理员 部分或完全 修改这些默认限制，但是不同风格的Unix 所需的步骤也不一样。多数系统要求在修改完值后重新自举运行中的内核。尽管如此，某些实现仍然给其中一些限制使用 16位整数，这在无形之中提供了一个难以突破的硬限制。</p>
+
+<hr />
+
+<p><br /><br />
+举例来说，Solaris 2.6有20个这些限制。</p>
+
+<p>它们的当前值可使用 sysdef命令 输出。不过，如果相应的内核模块尚未加载（也就是说尚未使用IPC机制），那么所输出的值为0。它们的值可通过在 /etc/system文件 中加入如下语句来修改，而 /etc/system文件 是自举内核时读入的。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_8.png" alt="" /></p>
+
+<p>等号左边名字中最后6个字符 是列在 图6-25、图11-8和图14-5中的变量名</p>
+
+<p><br /></p>
+
+<p>至于Digital Unix 4.0B，sysconfig程序 可用于 查询或修改 许多内核参数和限制。下面是使用-q选项时该程序的输出，它在 ipc子系统 查询内核以输出当前限制值。我们已省略掉了与System V IPC机制无关的一些行。</p>
+
+<p><img src="/images/Unp2/UNP2_3/UNP2_9.png" alt="" /></p>
+
+<p>这些参数的默认值可通过在 /etc/sysconfigtab文件 中，来指定不同的值来修改。不过，该文件应使用 sysconfigdb程序 维护。该文件是在系统自举时读入的。</p>
+
+</div>
+
+<div class="about">
+    <div class="about__devider">*****</div>
+    <div class="about__text">
+        Written by <strong>  WaterWoodFountainhead </strong>
+        on <strong>04 August 2019</strong>
+    </div>
+</div>
+
+
+        </div>
+
+        <script src="/assets/vendor/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+        
+    </body>
+</html>
